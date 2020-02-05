@@ -10,6 +10,8 @@ import (
 )
 
 func TestGetVersion(t *testing.T) {
+	DumpBuildManifest("Terminus / Atlas Feature Flag")
+
 	var tests = []struct {
 		name     string
 		expected *pb.VersionResponse
@@ -17,7 +19,7 @@ func TestGetVersion(t *testing.T) {
 	}{
 		{
 			name:     "verify service version",
-			expected: &pb.VersionResponse{Version: version},
+			expected: &pb.VersionResponse{Version: Manifest.Version},
 			err:      nil,
 		},
 	}

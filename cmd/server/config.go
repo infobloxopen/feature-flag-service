@@ -9,16 +9,15 @@ const (
 	defaultServerAddress = "0.0.0.0"
 	defaultServerPort    = "9090"
 
-	// Gateway 
+	// Gateway
 	defaultGatewayEnable      = true
 	defaultGatewayAddress     = "0.0.0.0"
 	defaultGatewayPort        = "8080"
 	defaultGatewayURL         = "/terminus/v1/"
 	defaultGatewaySwaggerFile = "pkg/pb/service.swagger.json"
 
-	// Database 
+	// Database
 	defaultDatabaseEnable   = false
-	// DSN example: "postgres://postgres:postgres@postgres:5432/atlas_db?sslmode=disable"
 	defaultDatabaseDSN      = ""
 	defaultDatabaseType     = "postgres"
 	defaultDatabaseAddress  = "0.0.0.0"
@@ -30,14 +29,14 @@ const (
 	defaultDatabaseOption   = ""
 
 	// PubSub
-	defaultPubsubEnable    =  false
-	defaultPubsubAddress   = "pubsub.atlas"
-	defaultPubsubPort      = "5555"
-	defaultPubsubPublish   = "example_hello"
-	defaultPubsubSubscribe = "example_hello"
+	defaultPubsubEnable       = false
+	defaultPubsubAddress      = "pubsub.atlas"
+	defaultPubsubPort         = "5555"
+	defaultPubsubPublish      = "example_hello"
+	defaultPubsubSubscribe    = "example_hello"
 	defaultPubsubSubscriberID = "example_hello_subscriberid"
 
-	// Authz 
+	// Authz
 	defaultAuthzEnable  = false
 	defaultAuthzAddress = "authz.atlas"
 	defaultAuthzPort    = "5555"

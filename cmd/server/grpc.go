@@ -18,31 +18,31 @@ import (
 	"github.com/Infoblox-CTO/atlas.feature.flag/pkg/svc"
 )
 
-func NewGRPCServer(logger *logrus.Logger) (*grpc.Server, error){
+func NewGRPCServer(logger *logrus.Logger) (*grpc.Server, error) {
 	grpcServer := grpc.NewServer(
-	grpc.KeepaliveParams(
-		keepalive.ServerParameters{
-			Time:    time.Duration(viper.GetInt("config.keepalive.time")) * time.Second,
-			Timeout: time.Duration(viper.GetInt("config.keepalive.timeout")) * time.Second,
-		},
-	),
-	grpc.UnaryInterceptor(
-		grpc_middleware.ChainUnaryServer(
-			// logging middleware
-			grpc_logrus.UnaryServerInterceptor(logrus.NewEntry(logger)),
+		grpc.KeepaliveParams(
+			keepalive.ServerParameters{
+				Time:    time.Duration(viper.GetInt("config.keepalive.time")) * time.Second,
+				Timeout: time.Duration(viper.GetInt("config.keepalive.timeout")) * time.Second,
+			},
+		),
+		grpc.UnaryInterceptor(
+			grpc_middleware.ChainUnaryServer(
+				// logging middleware
+				grpc_logrus.UnaryServerInterceptor(logrus.NewEntry(logger)),
 
-			// Request-Id interceptor
-			requestid.UnaryServerInterceptor(),
+				// Request-Id interceptor
+				requestid.UnaryServerInterceptor(),
 
-			// validation middleware
-			grpc_validator.UnaryServerInterceptor(),
+				// validation middleware
+				grpc_validator.UnaryServerInterceptor(),
 
-			// collection operators middleware
-			gateway.UnaryServerInterceptor(),
+				// collection operators middleware
+				gateway.UnaryServerInterceptor(),
 			),
 		),
 	)
-	
+
 	// register service implementation with the grpcServer
 	s, err := svc.NewBasicServer()
 	if err != nil {

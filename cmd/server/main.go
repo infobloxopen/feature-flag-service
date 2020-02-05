@@ -12,8 +12,8 @@ import (
 	"github.com/golang/protobuf/proto"
 	_ "github.com/grpc-ecosystem/go-grpc-middleware"
 	_ "github.com/grpc-ecosystem/go-grpc-middleware/validator"
-	_ "github.com/lyft/protoc-gen-validate/validate"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	_ "github.com/lyft/protoc-gen-validate/validate"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -25,9 +25,12 @@ import (
 	"github.com/infobloxopen/atlas-app-toolkit/server"
 
 	"github.com/Infoblox-CTO/atlas.feature.flag/pkg/pb"
+	"github.com/Infoblox-CTO/atlas.feature.flag/pkg/svc"
 )
 
 func main() {
+	svc.DumpBuildManifest("Terminus / Atlas Feature Flag")
+
 	doneC := make(chan error)
 	logger := NewLogger()
 
@@ -36,8 +39,6 @@ func main() {
 	}
 
 	go func() { doneC <- ServeExternal(logger) }()
-
-	
 
 	if err := <-doneC; err != nil {
 		logger.Fatal(err)
@@ -73,7 +74,7 @@ func ServeInternal(logger *logrus.Logger) error {
 		viper.GetString("internal.health"),
 		viper.GetString("internal.readiness"),
 	)
-	
+
 	healthChecker.AddLiveness("ping", health.HTTPGetCheck(
 		fmt.Sprint("http://", viper.GetString("internal.address"), ":", viper.GetString("internal.port"), "/ping"), time.Minute),
 	)
@@ -101,7 +102,6 @@ func ServeInternal(logger *logrus.Logger) error {
 
 // ServeExternal builds and runs the server that listens on ServerAddress and GatewayAddress
 func ServeExternal(logger *logrus.Logger) error {
-	
 	grpcServer, err := NewGRPCServer(logger)
 	if err != nil {
 		logger.Fatalln(err)
@@ -128,12 +128,12 @@ func ServeExternal(logger *logrus.Logger) error {
 	if err != nil {
 		logger.Fatalln(err)
 	}
-	
+
 	httpL, err := net.Listen("tcp", fmt.Sprintf("%s:%s", viper.GetString("gateway.address"), viper.GetString("gateway.port")))
 	if err != nil {
 		logger.Fatalln(err)
 	}
-	
+
 	logger.Printf("serving gRPC at %s:%s", viper.GetString("server.address"), viper.GetString("server.port"))
 	logger.Printf("serving http at %s:%s", viper.GetString("gateway.address"), viper.GetString("gateway.port"))
 
@@ -163,7 +163,3 @@ func forwardResponseOption(ctx context.Context, w http.ResponseWriter, resp prot
 	w.Header().Set("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate")
 	return nil
 }
-
-
-
-

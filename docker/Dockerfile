@@ -16,5 +16,6 @@ RUN mkdir -p /lib64 && \
 
 COPY --from=builder /go/src/github.com/Infoblox-CTO/atlas.feature.flag/bin/server .
 COPY pkg/pb/*.swagger.json www/swagger.json
+COPY pkg/svc/build_manifest.json .
 
 ENTRYPOINT ["server", "--gateway.swaggerFile", "www/swagger.json"]

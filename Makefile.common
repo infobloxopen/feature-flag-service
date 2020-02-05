@@ -28,13 +28,11 @@ GO_BUILD_FLAGS          ?= $(GO_CACHE) -i -v
 GO_TEST_FLAGS           ?= -v -cover
 GO_PACKAGES             ?= $(shell go list ./... | grep -v vendor)
 
-
 PROTOBUF_ARGS =  -I=$(PROJECT_ROOT)/vendor
 PROTOBUF_ARGS += --go_out=plugins=grpc:.
 PROTOBUF_ARGS += --validate_out="lang=go:."
 WITH_DATABASE ?= false
 WITH_GATEWAY  ?= false
-
 
 ifeq ($(WITH_DATABASE), true)
 PROTOBUF_ARGS += --gorm_out=.
@@ -59,6 +57,7 @@ test-atlas: fmt-atlas
 	@go test $(GO_TEST_FLAGS) $(GO_PACKAGES)
 
 docker-atlas:
+	$(GEN_BUILD_MANIFEST_JSON)
 	@docker build -f $(SERVER_DOCKERFILE) -t $(SERVER_IMAGE):$(IMAGE_VERSION) .
 	@docker image prune -f --filter label=stage=server-intermediate
 
