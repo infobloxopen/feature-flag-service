@@ -2,8 +2,9 @@ package svc
 
 import (
 	"encoding/json"
-	"github.com/sirupsen/logrus"
 	"io/ioutil"
+
+	"github.com/sirupsen/logrus"
 )
 
 // BuildManifestJSONPath defines path of build_manifest.json.

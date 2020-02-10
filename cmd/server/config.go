@@ -1,6 +1,8 @@
 package main
 
-import "github.com/spf13/pflag"
+import (
+	"github.com/spf13/pflag"
+)
 
 const (
 	// configuration defaults support local development (i.e. "go run ...")
