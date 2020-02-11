@@ -36,6 +36,7 @@ message ListFeatureFlagResponse {
 message ReadFeatureFlagRequest {
   string feature_name = 1;
   infoblox.api.FieldSelection fields = 2;
+  map<string,string> labels = 3;
 }
 
 message ReadFeatureFlagResponse {

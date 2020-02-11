@@ -9,6 +9,7 @@ type (
 		Find(featureName string, labels map[string]string) *pb.FeatureFlag
 		RemoveDefinition(featureName string)
 		RemoveOverride(featureName string, labels map[string]string)
+		FindAll(labels map[string]string) []*pb.FeatureFlag
 	}
 	FeatureFlagDefinition struct {
 		FeatureName  string

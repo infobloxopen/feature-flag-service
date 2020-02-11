@@ -393,6 +393,8 @@ func (m *ReadFeatureFlagRequest) Validate() error {
 		}
 	}
 
+	// no validation rules for Labels
+
 	return nil
 }
 

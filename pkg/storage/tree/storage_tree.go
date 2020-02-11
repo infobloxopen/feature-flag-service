@@ -59,24 +59,44 @@ func (s *InMemoryTreeStorage) Override(ffo storage.FeatureFlagOverride) {
 	logrus.WithField("FeatureName", ffo.FeatureName).WithField("Action", "Override").Errorf("Definition not found")
 }
 
+func (s *InMemoryTreeStorage) FindAll(labels map[string]string) []*pb.FeatureFlag {
+	s.RLock()
+	defer s.RUnlock()
+	var resultSet []*pb.FeatureFlag
+	for featureName, d := range s.tree {
+		descriptors := labelsToDescriptors(labels)
+		if r := d.findByDescriptors(descriptors); r != nil {
+			resultSet = append(resultSet, &pb.FeatureFlag{Origin: r.overrideName, FeatureName: featureName, Value: r.value})
+			continue
+		}
+		resultSet = append(resultSet, &pb.FeatureFlag{FeatureName: featureName, Value: d.defaultValue})
+	}
+	return resultSet
+}
+
 func (s *InMemoryTreeStorage) Find(featureName string, labels map[string]string) *pb.FeatureFlag {
 	s.RLock()
 	defer s.RUnlock()
 	if d, ok := s.tree[featureName]; ok {
 		descriptors := labelsToDescriptors(labels)
-		if foundRecords, _ := matchLabels(d.records, descriptors); len(foundRecords) > 0 {
-			sort.Slice(foundRecords, func(i, j int) bool {
-				return foundRecords[i].priority > foundRecords[j].priority
-			})
-			foundRecord := foundRecords[0]
-			if foundRecord.exists {
-				return &pb.FeatureFlag{Origin: foundRecord.overrideName, FeatureName: featureName, Value: foundRecord.value}
-			}
+		if r := d.findByDescriptors(descriptors); r != nil {
+			return &pb.FeatureFlag{Origin: r.overrideName, FeatureName: featureName, Value: r.value}
 		}
 		return &pb.FeatureFlag{FeatureName: featureName, Value: d.defaultValue}
 	}
 	return nil
 }
+
+func (d *definition) findByDescriptors(descriptors []string) *record {
+	if foundRecords, _ := matchLabels(d.records, descriptors); len(foundRecords) > 0 {
+		sort.Slice(foundRecords, func(i, j int) bool {
+			return foundRecords[i].priority > foundRecords[j].priority
+		})
+		return foundRecords[0]
+	}
+	return nil
+}
+
 func (d *definition) insertRecord(value, overrideName string, priority int, descriptors []string) {
 	r := &record{value: value, overrideName: overrideName, priority: priority, records: map[string]*record{}, exists: true}
 	insert(d.records, descriptors, r)
