@@ -2,10 +2,12 @@ package test
 
 import (
 	"fmt"
+	"testing"
+
+	"github.com/Infoblox-CTO/atlas.feature.flag/pkg/crd"
 	"github.com/Infoblox-CTO/atlas.feature.flag/pkg/pb"
 	"github.com/Infoblox-CTO/atlas.feature.flag/pkg/storage"
 	"github.com/Infoblox-CTO/atlas.feature.flag/pkg/storage/tree"
-	"testing"
 )
 
 type (
@@ -31,7 +33,7 @@ func TestMain(m *testing.M) {
 
 func define(fName, fValue string) action {
 	return func(s storage.Storage, t *testing.T) {
-		s.Define(storage.FeatureFlagDefinition{FeatureName: fName, DefaultValue: fValue})
+		s.Define(crd.FeatureFlag{FeatureID: fName, Value: fValue})
 	}
 }
 
@@ -49,7 +51,7 @@ func rmOverride(key string, fields map[string]string) action {
 
 func override(fName, fValue, fOrigin string, priority int, labels map[string]string) action {
 	return func(s storage.Storage, t *testing.T) {
-		s.Override(storage.FeatureFlagOverride{FeatureName: fName, Value: fValue, Origin: fOrigin, Priority: priority, Labels: labels})
+		s.Override(crd.FeatureFlagOverride{FeatureID: fName, Value: fValue, OverrideName: fOrigin, Priority: priority, Labels: labels})
 	}
 }
 

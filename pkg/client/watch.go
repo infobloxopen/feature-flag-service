@@ -13,7 +13,8 @@ import (
 )
 
 const (
-	kubeconfig string = "default"
+	Kubeconfig string = "" // todo this will need to be set by env
+
 	// LWFeatureFlag ...
 	LWFeatureFlag = "Feature Flag List Watcher"
 
@@ -31,11 +32,11 @@ func getCRDControllers() map[string]cache.Controller {
 	refresh := time.Minute * 5
 
 	crdChangeHandler := cache.FilteringResourceEventHandler{
-		FilterFunc: crd.ShouldProcessCR,
+		FilterFunc: ShouldProcessCR,
 		Handler: cache.ResourceEventHandlerFuncs{
-			AddFunc:    crd.HandleCRAdd,
-			DeleteFunc: crd.HandleCRDelete,
-			UpdateFunc: crd.HandleCRUpdate},
+			AddFunc:    HandleCRAdd,
+			DeleteFunc: HandleCRDelete,
+			UpdateFunc: HandleCRUpdate},
 	}
 
 	// Watch for changes in PARGs objects and fire Add, Delete, Update callbacks
@@ -60,13 +61,13 @@ func getCRDControllers() map[string]cache.Controller {
 	}
 }
 
-// creates a list of feature flag controllers for Kubernetes CRD watching
+// WatchCRs creates a list of feature flag controllers for Kubernetes CRD watching
 // and connects them to the cluster;
 // as of Kubernetes 1.9, these controllers will not return to the calling
 // code on error, so we don't have a way of reacting to CRD deletion
-func watchCRs() {
-	featureflags := ConnectToCluster(kubeconfig, crd.FeatureFlagCrdDefinition)
-	featureflagoverrides := ConnectToCluster(kubeconfig, crd.FeatureFlagOverrideCrdDefinition)
+func WatchCRs() {
+	featureflags := ConnectToCluster(Kubeconfig, crd.FeatureFlagCrdDefinition)
+	featureflagoverrides := ConnectToCluster(Kubeconfig, crd.FeatureFlagOverrideCrdDefinition)
 
 	Watchers[LWFeatureFlag] = featureflags.NewListWatch()
 	Watchers[LWFeatureFlagOverride] = featureflagoverrides.NewListWatch()

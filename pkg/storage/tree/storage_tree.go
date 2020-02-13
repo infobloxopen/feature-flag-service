@@ -2,24 +2,27 @@ package tree
 
 import (
 	"fmt"
-	"github.com/Infoblox-CTO/atlas.feature.flag/pkg/pb"
-	"github.com/Infoblox-CTO/atlas.feature.flag/pkg/storage"
-	"github.com/sirupsen/logrus"
 	"sort"
 	"sync"
+
+	"github.com/sirupsen/logrus"
+
+	"github.com/Infoblox-CTO/atlas.feature.flag/pkg/crd"
+	"github.com/Infoblox-CTO/atlas.feature.flag/pkg/pb"
+	"github.com/Infoblox-CTO/atlas.feature.flag/pkg/storage"
 )
 
 type (
 	definition struct {
 		defaultValue string
-		records      map[string]*record //maps label_expression to FeatureOverrideLookup
+		records      map[string]*record // maps label_expression to FeatureOverrideLookup
 	}
 	record struct {
 		overrideName string
 		value        string
 		priority     int
 		exists       bool
-		records      map[string]*record //maps next in chain label_expression to inner overrides FeatureOverrideLookup
+		records      map[string]*record // maps next in chain label_expression to inner overrides FeatureOverrideLookup
 	}
 	InMemoryTreeStorage struct {
 		sync.RWMutex
@@ -27,38 +30,42 @@ type (
 	}
 )
 
+// NewInMemoryStorage ...
 func NewInMemoryStorage() storage.Storage {
 	return &InMemoryTreeStorage{tree: map[string]*definition{}}
 }
 
-func (s *InMemoryTreeStorage) Define(ffd storage.FeatureFlagDefinition) {
+// Define ...
+func (s *InMemoryTreeStorage) Define(ffd crd.FeatureFlag) {
 	s.Lock()
 	defer s.Unlock()
-	if def, ok := s.tree[ffd.FeatureName]; ok {
-		logrus.WithField("FeatureName", ffd.FeatureName).WithField("NewDefaultValue", ffd.DefaultValue).Error("Definition already exists, defaultValue will be overridden")
-		def.defaultValue = ffd.DefaultValue
+	if def, ok := s.tree[ffd.FeatureID]; ok {
+		logrus.WithField("FeatureName", ffd.FeatureID).WithField("NewDefaultValue", ffd.Value).Error("Definition already exists, defaultValue will be overridden")
+		def.defaultValue = ffd.Value
 		return
 	}
-	s.tree[ffd.FeatureName] = &definition{
-		defaultValue: ffd.DefaultValue,
+	s.tree[ffd.FeatureID] = &definition{
+		defaultValue: ffd.Value,
 		records:      make(map[string]*record),
 	}
 }
 
-func (s *InMemoryTreeStorage) Override(ffo storage.FeatureFlagOverride) {
+// Override ...
+func (s *InMemoryTreeStorage) Override(ffo crd.FeatureFlagOverride) {
 	s.Lock()
 	defer s.Unlock()
-	if d, ok := s.tree[ffo.FeatureName]; ok {
+	if d, ok := s.tree[ffo.FeatureID]; ok {
 		descriptors := labelsToDescriptors(ffo.Labels)
 		if duplicate := d.findDuplicate(descriptors); duplicate != nil {
-			logrus.WithField("FeatureName", ffo.FeatureName).Errorf("Duplicate found %#v", duplicate)
+			logrus.WithField("FeatureName", ffo.FeatureID).Errorf("Duplicate found %#v", duplicate)
 		}
-		d.insertRecord(ffo.Value, ffo.Origin, ffo.Priority, descriptors)
+		d.insertRecord(ffo.Value, ffo.OverrideName, ffo.Priority, descriptors)
 		return
 	}
-	logrus.WithField("FeatureName", ffo.FeatureName).WithField("Action", "Override").Errorf("Definition not found")
+	logrus.WithField("FeatureName", ffo.FeatureID).WithField("Action", "Override").Errorf("Definition not found")
 }
 
+// FindAll ...
 func (s *InMemoryTreeStorage) FindAll(labels map[string]string) []*pb.FeatureFlag {
 	s.RLock()
 	defer s.RUnlock()
@@ -74,6 +81,7 @@ func (s *InMemoryTreeStorage) FindAll(labels map[string]string) []*pb.FeatureFla
 	return resultSet
 }
 
+// Find ...
 func (s *InMemoryTreeStorage) Find(featureName string, labels map[string]string) *pb.FeatureFlag {
 	s.RLock()
 	defer s.RUnlock()
@@ -101,6 +109,7 @@ func (d *definition) insertRecord(value, overrideName string, priority int, desc
 	r := &record{value: value, overrideName: overrideName, priority: priority, records: map[string]*record{}, exists: true}
 	insert(d.records, descriptors, r)
 }
+
 func insert(records map[string]*record, descriptors []string, r *record) {
 	length := len(descriptors)
 	switch length {
@@ -182,12 +191,14 @@ func labelsToDescriptors(labels map[string]string) []string {
 	return descriptors
 }
 
+// RemoveDefinition ...
 func (s *InMemoryTreeStorage) RemoveDefinition(featureName string) {
 	s.Lock()
 	defer s.Unlock()
 	delete(s.tree, featureName)
 }
 
+// RemoveOverride ...
 func (s *InMemoryTreeStorage) RemoveOverride(featureName string, labels map[string]string) {
 	s.Lock()
 	defer s.Unlock()

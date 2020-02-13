@@ -19,6 +19,7 @@ type BuildManifest struct {
 	Timestamp string
 }
 
+// Manifest ...
 var Manifest *BuildManifest
 
 // DumpBuildManifest reads, parses, and dumps build_manifest.json to stdout.

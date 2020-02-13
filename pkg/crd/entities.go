@@ -102,6 +102,7 @@ type FeatureFlagOverride struct {
 	OverrideName string `json:"override_name,omitempty"`
 	Priority     int    `json:"priority,omitempty"`
 	Value        string `json:"value,omitempty"`
+	Labels       map[string]string
 }
 
 // GetKind ...
@@ -125,6 +126,7 @@ func (in *FeatureFlagOverride) DeepCopyObject() runtime.Object {
 		in.OverrideName,
 		in.Priority,
 		in.Value,
+		in.CRBaseImpl.Labels,
 	}
 }
 

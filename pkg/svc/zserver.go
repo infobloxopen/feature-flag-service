@@ -2,10 +2,13 @@ package svc
 
 import (
 	"context"
-
+	"errors"
+	"github.com/Infoblox-CTO/atlas.feature.flag/pkg/client"
 	"github.com/golang/protobuf/ptypes/empty"
+	"github.com/sirupsen/logrus"
 
 	"github.com/Infoblox-CTO/atlas.feature.flag/pkg/pb"
+	"github.com/Infoblox-CTO/atlas.feature.flag/pkg/storage/tree"
 )
 
 // Default implementation of the AtlasFeatureFlag server interface
@@ -20,18 +23,34 @@ func (server) GetVersion(context.Context, *empty.Empty) (*pb.VersionResponse, er
 }
 
 // List will return a list of all feature flags
-func (server) List(context.Context, *pb.ListFeatureFlagRequest) (*pb.ListFeatureFlagResponse, error) {
-	// TODO: business logic
-	return &pb.ListFeatureFlagResponse{}, nil
+func (server) List(ctx context.Context, request *pb.ListFeatureFlagRequest) (*pb.ListFeatureFlagResponse, error) {
+	featureFlags := client.Cache.FindAll(request.Labels)
+	return &pb.ListFeatureFlagResponse{
+		Results: featureFlags,
+	}, nil
 }
 
 // Read will return a particular value for the requested feature flag
-func (server) Read(context.Context, *pb.ReadFeatureFlagRequest) (*pb.ReadFeatureFlagResponse, error) {
-	// TODO: business logic
-	return &pb.ReadFeatureFlagResponse{}, nil
+func (server) Read(ctx context.Context, request *pb.ReadFeatureFlagRequest) (*pb.ReadFeatureFlagResponse, error) {
+	featureFlag := client.Cache.Find(request.FeatureName, request.Labels)
+	if featureFlag == nil {
+		return nil, errors.New("feature flag not found")
+	}
+	return &pb.ReadFeatureFlagResponse{
+		Result: &pb.FeatureFlag{
+			FeatureName: featureFlag.FeatureName,
+			Value:       featureFlag.Value,
+			Origin:      featureFlag.Origin,
+		},
+	}, nil
 }
 
 // NewBasicServer returns an instance of the default server interface
 func NewBasicServer() (pb.AtlasFeatureFlagServer, error) {
+	client.Cache = tree.NewInMemoryStorage()
+	logrus.Debug(client.Cache)
+	if client.Kubeconfig != "" {
+		client.WatchCRs()
+	}
 	return &server{}, nil
 }

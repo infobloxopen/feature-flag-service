@@ -18,6 +18,7 @@ import (
 	"github.com/Infoblox-CTO/atlas.feature.flag/pkg/crd"
 )
 
+// CrdClient ...
 type CrdClient struct {
 	cl     *rest.RESTClient
 	ns     string
@@ -60,6 +61,7 @@ func CreateCRD(clientset clientset.Interface, crdDef crd.CrdDefinition) error {
 	return err // note that wait time is done in calling function
 }
 
+// ConnectToCluster ...
 func ConnectToCluster(kube string, crdDef crd.CrdDefinition) CrdClient {
 	config, err := getClientConfig(kube)
 	if err != nil {
@@ -89,6 +91,7 @@ func ConnectToCluster(kube string, crdDef crd.CrdDefinition) CrdClient {
 	return *crdclient
 }
 
+// NewListWatch ...
 func (f *CrdClient) NewListWatch() *cache.ListWatch {
 	return cache.NewListWatchFromClient(f.cl, f.plural, f.ns, fields.Everything())
 }
@@ -116,6 +119,7 @@ func NewClient(cfg *rest.Config, crdDef crd.CrdDefinition) (*rest.RESTClient, *r
 	return client, scheme, nil
 }
 
+// NewCrdClient ...
 func NewCrdClient(cl *rest.RESTClient, scheme *runtime.Scheme, namespace string, crdDef crd.CrdDefinition) *CrdClient {
 	return &CrdClient{cl: cl, ns: namespace, plural: crdDef.Plural,
 		codec: runtime.NewParameterCodec(scheme)}
