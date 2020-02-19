@@ -25,7 +25,7 @@ func TestGetVersion(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			server, err := NewBasicServer()
+			server, err := NewBasicServer(false) // emulating k8s crds in unit tests is unfeasible
 			if err != test.err {
 				t.Errorf("Unexpected error when creating server: %v - expected: %v",
 					err, test.err,

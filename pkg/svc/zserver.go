@@ -46,10 +46,10 @@ func (server) Read(ctx context.Context, request *pb.ReadFeatureFlagRequest) (*pb
 }
 
 // NewBasicServer returns an instance of the default server interface
-func NewBasicServer() (pb.AtlasFeatureFlagServer, error) {
+func NewBasicServer(useKCRDs bool) (pb.AtlasFeatureFlagServer, error) {
 	client.Cache = tree.NewInMemoryStorage()
 	logrus.Debug(client.Cache)
-	if client.Kubeconfig != "" {
+	if useKCRDs {
 		client.WatchCRs()
 	}
 	return &server{}, nil

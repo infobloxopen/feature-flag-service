@@ -7,6 +7,9 @@ import (
 const (
 	// configuration defaults support local development (i.e. "go run ...")
 
+	//
+	defaultKubeConfig = ""
+
 	// Server
 	defaultServerAddress = "0.0.0.0"
 	defaultServerPort    = "9090"
@@ -71,6 +74,8 @@ const (
 
 var (
 	// define flag overrides
+	flagKubeConfig = pflag.String("kubeconfig", defaultKubeConfig, "path to kubernetes cluster config file")
+
 	flagServerAddress = pflag.String("server.address", defaultServerAddress, "adress of gRPC server")
 	flagServerPort    = pflag.String("server.port", defaultServerPort, "port of gRPC server")
 

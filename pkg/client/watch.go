@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/spf13/viper"
 	"google.golang.org/grpc/metadata"
 
 	"k8s.io/client-go/tools/cache"
@@ -13,8 +14,6 @@ import (
 )
 
 const (
-	Kubeconfig string = "" // todo this will need to be set by env
-
 	// LWFeatureFlag ...
 	LWFeatureFlag = "Feature Flag List Watcher"
 
@@ -66,8 +65,8 @@ func getCRDControllers() map[string]cache.Controller {
 // as of Kubernetes 1.9, these controllers will not return to the calling
 // code on error, so we don't have a way of reacting to CRD deletion
 func WatchCRs() {
-	featureflags := ConnectToCluster(Kubeconfig, crd.FeatureFlagCrdDefinition)
-	featureflagoverrides := ConnectToCluster(Kubeconfig, crd.FeatureFlagOverrideCrdDefinition)
+	featureflags := ConnectToCluster(viper.GetString("kubeconfig"), crd.FeatureFlagCrdDefinition)
+	featureflagoverrides := ConnectToCluster(viper.GetString("kubeconfig"), crd.FeatureFlagOverrideCrdDefinition)
 
 	Watchers[LWFeatureFlag] = featureflags.NewListWatch()
 	Watchers[LWFeatureFlagOverride] = featureflagoverrides.NewListWatch()
