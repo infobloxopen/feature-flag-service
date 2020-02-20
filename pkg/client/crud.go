@@ -72,7 +72,7 @@ func HandleCRUpdate(oldCR, newCR interface{}) {
 
 func cacheFeatureFlag(oldCR interface{}, newCR interface{}) {
 	if newCR != nil {
-		newFeatureFlag := newCR.(crd.FeatureFlag)
+		newFeatureFlag := newCR.(*crd.FeatureFlag)
 		featureFlag := &crd.FeatureFlag{
 			newFeatureFlag.CRBaseImpl,
 			newFeatureFlag.FeatureID,
@@ -81,14 +81,14 @@ func cacheFeatureFlag(oldCR interface{}, newCR interface{}) {
 
 		Cache.Define(*featureFlag)
 	} else if oldCR != nil {
-		oldFeatureFlag := oldCR.(crd.FeatureFlag)
+		oldFeatureFlag := oldCR.(*crd.FeatureFlag)
 		Cache.RemoveDefinition(oldFeatureFlag.FeatureID)
 	}
 }
 
 func cacheFeatureFlagOverride(oldCR interface{}, newCR interface{}) {
 	if newCR != nil {
-		newFeatureFlagOverride := newCR.(crd.FeatureFlagOverride)
+		newFeatureFlagOverride := newCR.(*crd.FeatureFlagOverride)
 		featureFlagOverride := &crd.FeatureFlagOverride{
 			newFeatureFlagOverride.CRBaseImpl,
 			newFeatureFlagOverride.FeatureID,
@@ -100,7 +100,7 @@ func cacheFeatureFlagOverride(oldCR interface{}, newCR interface{}) {
 
 		Cache.Override(*featureFlagOverride)
 	} else if oldCR != nil {
-		oldFeatureFlagOverride := oldCR.(crd.FeatureFlagOverride)
+		oldFeatureFlagOverride := oldCR.(*crd.FeatureFlagOverride)
 		Cache.RemoveOverride(oldFeatureFlagOverride.FeatureID, oldFeatureFlagOverride.Labels)
 	}
 }

@@ -49,6 +49,11 @@ func (pbi *CRBaseImpl) GetVersion() string {
 	return pbi.ResourceVersion
 }
 
+// GetAppName ...
+func (pbi *CRBaseImpl) GetAppName() string {
+	return pbi.ObjectMeta.Name
+}
+
 // GetCreationTime ...
 func (pbi *CRBaseImpl) GetCreationTime() string {
 	return pbi.CreationTimestamp.String()
