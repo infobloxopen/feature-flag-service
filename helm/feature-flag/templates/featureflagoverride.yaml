@@ -1,7 +1,7 @@
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
-  name: featureflag.terminus.infoblox.com
+  name: featureflagoverrides.terminus.infoblox.com
 spec:
   group: terminus.infoblox.com
   versions:
@@ -11,15 +11,20 @@ spec:
   version: v1
   scope: Namespaced
   names:
-    plural: featureflags
-    singular: featureflag
-    kind: FeatureFlag
+    plural: featureflagoverrides
+    singular: featureflagoverride
+    kind: FeatureFlagOverride
   validation:
     openAPIV3Schema:
       properties:
         feature_id:
           type: string
           pattern: '^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$'
+        override_name:
+          type: string
+          pattern: '.*'
+        priority:
+          type: integer
         value:
           type: string
           pattern: '.*'

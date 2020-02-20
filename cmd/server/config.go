@@ -21,26 +21,6 @@ const (
 	defaultGatewayURL         = "/terminus/v1/"
 	defaultGatewaySwaggerFile = "pkg/pb/service.swagger.json"
 
-	// Database
-	defaultDatabaseEnable   = false
-	defaultDatabaseDSN      = ""
-	defaultDatabaseType     = "postgres"
-	defaultDatabaseAddress  = "0.0.0.0"
-	defaultDatabasePort     = "5432"
-	defaultDatabaseName     = "atlas_feature_flag"
-	defaultDatabaseUser     = "postgres"
-	defaultDatabasePassword = "postgres"
-	defaultDatabaseSSL      = "disable"
-	defaultDatabaseOption   = ""
-
-	// PubSub
-	defaultPubsubEnable       = false
-	defaultPubsubAddress      = "pubsub.atlas"
-	defaultPubsubPort         = "5555"
-	defaultPubsubPublish      = "example_hello"
-	defaultPubsubSubscribe    = "example_hello"
-	defaultPubsubSubscriberID = "example_hello_subscriberid"
-
 	// Authz
 	defaultAuthzEnable  = false
 	defaultAuthzAddress = "authz.atlas"
@@ -84,24 +64,6 @@ var (
 	flagGatewayPort        = pflag.String("gateway.port", defaultGatewayPort, "port of gateway server")
 	flagGatewayURL         = pflag.String("gateway.endpoint", defaultGatewayURL, "endpoint of gateway server")
 	flagGatewaySwaggerFile = pflag.String("gateway.swaggerFile", defaultGatewaySwaggerFile, "directory of swagger.json file")
-
-	flagDatabaseEnable   = pflag.Bool("database.enable", defaultDatabaseEnable, "enable database")
-	flagDatabaseDSN      = pflag.String("database.dsn", defaultDatabaseDSN, "DSN of the database")
-	flagDatabaseType     = pflag.String("database.type", defaultDatabaseType, "type of the database")
-	flagDatabaseAddress  = pflag.String("database.address", defaultDatabaseAddress, "address of the database")
-	flagDatabasePort     = pflag.String("database.port", defaultDatabasePort, "port of the database")
-	flagDatabaseName     = pflag.String("database.name", defaultDatabaseName, "name of the database")
-	flagDatabaseUser     = pflag.String("database.user", defaultDatabaseUser, "database username")
-	flagDatabasePassword = pflag.String("database.password", defaultDatabasePassword, "database password")
-	flagDatabaseSSL      = pflag.String("database.ssl", defaultDatabaseSSL, "database ssl mode")
-	flagDatabaseOption   = pflag.String("database.option", defaultDatabaseOption, "define custom option to db driver")
-
-	flagPubsubEnable       = pflag.Bool("atlas.pubsub.enable", defaultPubsubEnable, "enable application with pubsub")
-	flagPubsubAddress      = pflag.String("atlas.pubsub.address", defaultPubsubAddress, "address or FQDN of the pubsub service")
-	flagPubsubPort         = pflag.String("atlas.pubsub.port", defaultPubsubPort, "port of the pubsub service")
-	flagPubsubPublish      = pflag.String("atlas.pubsub.publish", defaultPubsubPublish, "publisher topic")
-	flagPubsubSubscribe    = pflag.String("atlas.pubsub.subscribe", defaultPubsubSubscribe, "subscriber topic")
-	flagPubsubSubscriberID = pflag.String("atlas.pubsub.subscriber.id", defaultPubsubSubscriberID, "subscriber id")
 
 	flagAuthzEnable  = pflag.Bool("atlas.authz.enable", defaultAuthzEnable, "enable application with authorization")
 	flagAuthzAddress = pflag.String("atlas.authz.address", defaultAuthzAddress, "address or FQDN of the authorization service")

@@ -9,23 +9,6 @@ gateway:
   port: 8080
   endpoint: /terminus/v1/
   swaggerFile: ./www/service.swagger.json
-database:
-  enable: false
-  dsn: 
-  type: postgres
-  address: 0.0.0.0
-  port: 5432
-  name: atlas_feature_flag
-  user: postgres
-  password: postgres
-  ssl: disable
-  option:
-atlas.pubsub:
-  enable: false
-  address: atlas.pubsub
-  port: 5555 
-  publish: topic
-  subscribe: topic
 atlas.authz:
   enable: false
   address: themis.authz

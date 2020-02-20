@@ -1,0 +1,37 @@
+replicaCount: 1
+
+image:
+  repository: infobloxcto/atlas.feature.flag
+  tag: # defaults to .Chart.Version
+  pullPolicy: Always
+
+serviceAccount:
+  name: ibcto
+
+debugLevel: info
+
+nameOverride: ""
+fullnameOverride: ""
+
+service:
+  ports:
+    grpc:
+      protocol: TCP
+      port: 9090
+    http:
+      protocol: TCP
+      port: 8080
+
+ingress:
+  enabled: false
+
+prometheus:
+  scrape: true
+
+resources: {}
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
