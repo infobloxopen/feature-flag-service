@@ -10,7 +10,7 @@ image:
   pullPolicy: Always
 
 serviceAccount:
-  name: ibcto
+  name: feature-flag
 
 debugLevel: info
 
