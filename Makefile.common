@@ -129,36 +129,6 @@ else
 	@echo "Your application doesn't have swagger file"
 endif
 
-.helm-init:
-	@# fixes .helm/repository/local: no such file or directory error
-	@helm init --client-only > /dev/null
-
-.PHONY: helm-lint
-helm-lint:
-	@helm lint ./helm/*
-
-build.properties: build.properties.in
-	sed 's/{CHART_FILE}/$(CHART_FILE)/g' build.properties.in > build.properties
-
-.helm-build-package: charts/$(CHART_FILE)
-
-.helm-test: helm-lint .helm-build-package
-	rm helm/$(CHART_FILE)
-
-.PHONY: push-chart
-push-chart: helm-lint charts/$(CHART_FILE) build.properties
-	docker run -e AWS_REGION=${AWS_REGION} \
-		-e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
-		-e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
-		-v $(PWD)/helm:/pkg \
-		${HELM_IMAGE} s3 push /pkg/$(CHART_FILE) infobloxcto
-
-charts/$(CHART_FILE): .helm-init
-	cd helm && helm package $(CHART) --version $(CHART_VERSION)
-
-.PHONY: lint
-lint:
-	@docker run --rm \
-    -v $(PWD):/go/src/$(PROJECT_ROOT) \
-    -w /go/src/$(PROJECT_ROOT) \
-    golangci/golangci-lint:v1.21.0-alpine golangci-lint run --config .golangci.yaml
+.PHONY: show-image-version
+show-image-version:
+	@echo $(IMAGE_VERSION)

@@ -13,48 +13,43 @@ pipeline {
     DIRECTORY = "src/github.com/Infoblox-CTO/atlas.feature.flag"
   }
   stages {
-    stage("Lint") {
+    stage('Test') {
       steps {
-        dir("$DIRECTORY") {
-          sh "make fmt && git diff --exit-code"
-        }
+        sh 'cd $DIRECTORY && make test'
+        sh 'helm init --client-only'
+        sh 'cd $DIRECTORY && make .helm-lint'
       }
     }
-    stage("Test") {
+    stage('Build image') {
       steps {
-        dir("$DIRECTORY") {
-          sh "make test"
-        }
+        sh 'cd $DIRECTORY && IMAGE_VERSION=\$(make show-image-version)-j$BUILD_NUMBER make docker'
       }
     }
-    stage("Build") {
-      steps {
-        withDockerRegistry([credentialsId: "dockerhub-bloxcicd", url: ""]) {
-          dir("$DIRECTORY") {
-            sh "make docker push"
-          }
-        }
-      }
-    }
-    stage("Push") {
+    stage('Push image') {
       when {
-        branch "master"
+        anyOf { branch 'master'; buildingTag() }
       }
       steps {
         withDockerRegistry([credentialsId: "dockerhub-bloxcicd", url: ""]) {
-          dir("$DIRECTORY") {
-            sh "make push IMAGE_VERSION=latest"
-          }
+          sh "cd $DIRECTORY && IMAGE_VERSION=\$(make show-image-version)-j$BUILD_NUMBER make push"
         }
       }
     }
-  }
-  post {
-    always {
-      dir("$DIRECTORY") {
-        sh "make clean || true"
+    stage('Push Chart') {
+      when {
+        anyOf { branch 'master'; buildingTag() }
       }
-      cleanWs()
+      steps {
+        dir("$WORKSPACE/$DIRECTORY") {
+          withDockerRegistry([credentialsId: "dockerhub-bloxcicd", url: ""]) {
+            withAWS(region:'us-east-1', credentials:'CICD_HELM') {
+              sh "IMAGE_VERSION=\$(make show-image-version)-j$BUILD_NUMBER make push-chart"
+            }
+          }
+          archiveArtifacts artifacts: 'deploy/*.tgz'
+          archiveArtifacts artifacts: 'build.properties'
+        }
+      }
     }
   }
 }
