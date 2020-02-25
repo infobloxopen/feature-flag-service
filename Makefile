@@ -21,7 +21,7 @@ push-chart: .helm-lint deploy/$(CHART_FILE) build.properties
 	docker run -e AWS_REGION=${AWS_REGION} \
 		-e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
 		-e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
-		-v $(PWD)/devops:/pkg \
+		-v $(PWD)/deploy:/pkg \
 		${HELM_IMAGE} s3 push /pkg/$(CHART_FILE) infobloxcto
 
 deploy/$(CHART_FILE):
