@@ -53,6 +53,10 @@ const (
 )
 
 var (
+	defaultJwtLabels = []string{"account_id", "user_id"}
+)
+
+var (
 	// define flag overrides
 	flagKubeConfig = pflag.String("kubeconfig", defaultKubeConfig, "path to kubernetes cluster config file")
 
@@ -89,4 +93,6 @@ var (
 	flagApplicationID   = pflag.String("app.id", defaultApplicationID, "identifier for the application")
 
 	flagLoggingLevel = pflag.String("logging.level", defaultLoggingLevel, "log level of application")
+
+	jwtToLabels = pflag.StringSlice("jwt.labels", defaultJwtLabels, "jwt field matched to labels")
 )

@@ -44,7 +44,7 @@ func NewGRPCServer(logger *logrus.Logger) (*grpc.Server, error) {
 	)
 
 	// register service implementation with the grpcServer
-	s, err := svc.NewBasicServer(true)
+	s, err := svc.NewBasicServer(true, viper.GetStringSlice("jwt.labels"))
 	if err != nil {
 		return nil, err
 	}

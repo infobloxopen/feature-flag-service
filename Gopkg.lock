@@ -10,6 +10,14 @@
   version = "v1.1.1"
 
 [[projects]]
+  branch = "master"
+  digest = "1:283c2e79f34b41f444d14c2b7a3cc458d3ff18736e502832eac0a407ebfe6263"
+  name = "github.com/dgrijalva/jwt-go"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "dc14462fd58732591c7fa58cc8496d6824316a82"
+
+[[projects]]
   digest = "1:abeb38ade3f32a92943e5be54f55ed6d6e3b6602761d74b4aab4c9dd45c18abd"
   name = "github.com/fsnotify/fsnotify"
   packages = ["."]
@@ -94,14 +102,16 @@
   version = "v0.4.0"
 
 [[projects]]
-  digest = "1:ab1b6ad5bfb8e06921421867d21e18d7a96c06a5967bc4603351e270b914ca3f"
+  digest = "1:24ddcc43125b1a9035454ff1ecf6263ae66859c3b9c5f26853571efb58aa537f"
   name = "github.com/grpc-ecosystem/go-grpc-middleware"
   packages = [
     ".",
+    "auth",
     "logging",
     "logging/logrus",
     "logging/logrus/ctxlogrus",
     "tags",
+    "util/metautils",
     "validator",
   ]
   pruneopts = "UT"
@@ -160,9 +170,10 @@
   version = "v0.3.8"
 
 [[projects]]
-  digest = "1:aeb43ab91102ba8c378f5603b8c85c361e815db2ffe864a77d7f74b53edf3c06"
+  digest = "1:afd482d1e45e83f058a6174f4672e2ac4410bf0c3a2ac988a3c1b6aa2b99e32d"
   name = "github.com/infobloxopen/atlas-app-toolkit"
   packages = [
+    "auth",
     "errors",
     "gateway",
     "gorm/resource",
@@ -666,6 +677,7 @@
     "github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger/options",
     "github.com/grpc-ecosystem/grpc-gateway/runtime",
     "github.com/grpc-ecosystem/grpc-gateway/utilities",
+    "github.com/infobloxopen/atlas-app-toolkit/auth",
     "github.com/infobloxopen/atlas-app-toolkit/gateway",
     "github.com/infobloxopen/atlas-app-toolkit/gorm/resource",
     "github.com/infobloxopen/atlas-app-toolkit/health",
