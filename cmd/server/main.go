@@ -114,6 +114,7 @@ func ServeExternal(logger *logrus.Logger) error {
 				runtime.WithForwardResponseOption(forwardResponseOption),
 				runtime.WithIncomingHeaderMatcher(gateway.ExtendedDefaultHeaderMatcher(
 					requestid.DefaultRequestIDKey)),
+				runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{OrigName: true, EmitDefaults: true}),
 			),
 			gateway.WithServerAddress(fmt.Sprintf("%s:%s", viper.GetString("server.address"), viper.GetString("server.port"))),
 			gateway.WithEndpointRegistration(viper.GetString("gateway.endpoint"), pb.RegisterAtlasFeatureFlagHandlerFromEndpoint),
