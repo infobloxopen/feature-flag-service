@@ -59,3 +59,14 @@ service AtlasFeatureFlag {
     };
   }
 }
+
+option (grpc.gateway.protoc_gen_swagger.options.openapiv2_swagger) = {
+    info: {
+      title: "Atlas Feature Flag Service"
+      description: "Atlas Feature Flag service (Terminus) provides the capability to introduce services/features into production on a trail or limited basis."
+      version: "v1.0.0"
+    };
+    schemes: HTTP;
+    schemes: HTTPS;
+    base_path: "/v1/";
+};

@@ -6,22 +6,25 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
 {{ include "feature-flag.labels" . | indent 4 }}
-{{- if .Values.ingress.annotations }}
   annotations:
-    {{- tpl (toYaml .Values.ingress.annotations | trim | nindent 4) . }}
-{{- end }}
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+    {{- if .Values.authURL }}
+    nginx.ingress.kubernetes.io/auth-url: {{ tpl .Values.authURL . }}
+    nginx.ingress.kubernetes.io/auth-response-headers: Authorization, Request-Id
+    {{- end }}
 spec:
     {{- if .Values.ingress.tls }}
   tls:
     - hosts:
-        - {{ tpl ($.Values.ingress.host) . }}
+        - {{ tpl .Values.host.csp.domain . }}
       secretName: {{ tpl ($.Values.ingress.tls.secretName) . }}
     {{- end }}
   rules:
-    - host: {{ tpl ($.Values.ingress.host) . }}
+    - host: {{ tpl .Values.host.csp.domain . }}
       http:
         paths:
-          - path:  {{ tpl .Values.ingress.path . }}
+          - path: /api/terminus/?(.*)
             backend:
               serviceName: {{ .Chart.Name }}
               servicePort: {{ .Values.service.ports.http.port }}
