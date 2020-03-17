@@ -31,6 +31,12 @@ service:
 
 ingress:
   enabled: true
+  tls:
+    enabled: true
+
+host:
+  csp:
+    domain: "csp.infoblox.com"
 
 prometheus:
   scrape: true
