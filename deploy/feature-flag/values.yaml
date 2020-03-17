@@ -35,6 +35,13 @@ ingress:
 prometheus:
   scrape: true
 
+authz:
+  enabled: true
+  namespace: "authz"
+  policy:
+    serviceName: "themis"
+    port: 80
+
 resources: {}
 
 nodeSelector: {}
