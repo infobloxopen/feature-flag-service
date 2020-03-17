@@ -172,17 +172,17 @@ var _ interface {
 	ErrorName() string
 } = FeatureFlagValidationError{}
 
-// Validate checks the field values on ListFeatureFlagRequest with the rules
+// Validate checks the field values on ListFeatureFlagsRequest with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, an error is returned.
-func (m *ListFeatureFlagRequest) Validate() error {
+func (m *ListFeatureFlagsRequest) Validate() error {
 	if m == nil {
 		return nil
 	}
 
 	if v, ok := interface{}(m.GetFilter()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return ListFeatureFlagRequestValidationError{
+			return ListFeatureFlagsRequestValidationError{
 				field:  "Filter",
 				reason: "embedded message failed validation",
 				cause:  err,
@@ -195,9 +195,9 @@ func (m *ListFeatureFlagRequest) Validate() error {
 	return nil
 }
 
-// ListFeatureFlagRequestValidationError is the validation error returned by
-// ListFeatureFlagRequest.Validate if the designated constraints aren't met.
-type ListFeatureFlagRequestValidationError struct {
+// ListFeatureFlagsRequestValidationError is the validation error returned by
+// ListFeatureFlagsRequest.Validate if the designated constraints aren't met.
+type ListFeatureFlagsRequestValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -205,24 +205,24 @@ type ListFeatureFlagRequestValidationError struct {
 }
 
 // Field function returns field value.
-func (e ListFeatureFlagRequestValidationError) Field() string { return e.field }
+func (e ListFeatureFlagsRequestValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e ListFeatureFlagRequestValidationError) Reason() string { return e.reason }
+func (e ListFeatureFlagsRequestValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e ListFeatureFlagRequestValidationError) Cause() error { return e.cause }
+func (e ListFeatureFlagsRequestValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e ListFeatureFlagRequestValidationError) Key() bool { return e.key }
+func (e ListFeatureFlagsRequestValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e ListFeatureFlagRequestValidationError) ErrorName() string {
-	return "ListFeatureFlagRequestValidationError"
+func (e ListFeatureFlagsRequestValidationError) ErrorName() string {
+	return "ListFeatureFlagsRequestValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e ListFeatureFlagRequestValidationError) Error() string {
+func (e ListFeatureFlagsRequestValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -234,14 +234,14 @@ func (e ListFeatureFlagRequestValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sListFeatureFlagRequest.%s: %s%s",
+		"invalid %sListFeatureFlagsRequest.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = ListFeatureFlagRequestValidationError{}
+var _ error = ListFeatureFlagsRequestValidationError{}
 
 var _ interface {
 	Field() string
@@ -249,12 +249,12 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = ListFeatureFlagRequestValidationError{}
+} = ListFeatureFlagsRequestValidationError{}
 
-// Validate checks the field values on ListFeatureFlagResponse with the rules
+// Validate checks the field values on ListFeatureFlagsResponse with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, an error is returned.
-func (m *ListFeatureFlagResponse) Validate() error {
+func (m *ListFeatureFlagsResponse) Validate() error {
 	if m == nil {
 		return nil
 	}
@@ -264,7 +264,7 @@ func (m *ListFeatureFlagResponse) Validate() error {
 
 		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
-				return ListFeatureFlagResponseValidationError{
+				return ListFeatureFlagsResponseValidationError{
 					field:  fmt.Sprintf("Results[%v]", idx),
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -276,7 +276,7 @@ func (m *ListFeatureFlagResponse) Validate() error {
 
 	if v, ok := interface{}(m.GetPage()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return ListFeatureFlagResponseValidationError{
+			return ListFeatureFlagsResponseValidationError{
 				field:  "Page",
 				reason: "embedded message failed validation",
 				cause:  err,
@@ -287,9 +287,9 @@ func (m *ListFeatureFlagResponse) Validate() error {
 	return nil
 }
 
-// ListFeatureFlagResponseValidationError is the validation error returned by
-// ListFeatureFlagResponse.Validate if the designated constraints aren't met.
-type ListFeatureFlagResponseValidationError struct {
+// ListFeatureFlagsResponseValidationError is the validation error returned by
+// ListFeatureFlagsResponse.Validate if the designated constraints aren't met.
+type ListFeatureFlagsResponseValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -297,24 +297,24 @@ type ListFeatureFlagResponseValidationError struct {
 }
 
 // Field function returns field value.
-func (e ListFeatureFlagResponseValidationError) Field() string { return e.field }
+func (e ListFeatureFlagsResponseValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e ListFeatureFlagResponseValidationError) Reason() string { return e.reason }
+func (e ListFeatureFlagsResponseValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e ListFeatureFlagResponseValidationError) Cause() error { return e.cause }
+func (e ListFeatureFlagsResponseValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e ListFeatureFlagResponseValidationError) Key() bool { return e.key }
+func (e ListFeatureFlagsResponseValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e ListFeatureFlagResponseValidationError) ErrorName() string {
-	return "ListFeatureFlagResponseValidationError"
+func (e ListFeatureFlagsResponseValidationError) ErrorName() string {
+	return "ListFeatureFlagsResponseValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e ListFeatureFlagResponseValidationError) Error() string {
+func (e ListFeatureFlagsResponseValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -326,14 +326,14 @@ func (e ListFeatureFlagResponseValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sListFeatureFlagResponse.%s: %s%s",
+		"invalid %sListFeatureFlagsResponse.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = ListFeatureFlagResponseValidationError{}
+var _ error = ListFeatureFlagsResponseValidationError{}
 
 var _ interface {
 	Field() string
@@ -341,7 +341,7 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = ListFeatureFlagResponseValidationError{}
+} = ListFeatureFlagsResponseValidationError{}
 
 // Validate checks the field values on ReadFeatureFlagRequest with the rules
 // defined in the proto definition for this message. If any rules are

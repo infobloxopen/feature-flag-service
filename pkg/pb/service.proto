@@ -20,12 +20,12 @@ message FeatureFlag {
   string origin = 3;
 }
 
-message ListFeatureFlagRequest {
+message ListFeatureFlagsRequest {
   infoblox.api.Filtering filter = 1;
   map<string,string> labels = 2;
 }
 
-message ListFeatureFlagResponse {
+message ListFeatureFlagsResponse {
   repeated FeatureFlag results = 1;
   infoblox.api.PageInfo page = 2;
 }
@@ -47,9 +47,9 @@ service AtlasFeatureFlag {
     };
   }
 
-  rpc List (ListFeatureFlagRequest) returns (ListFeatureFlagResponse) {
+  rpc List (ListFeatureFlagsRequest) returns (ListFeatureFlagsResponse) {
     option (google.api.http) = {
-      get: "/feature"
+      get: "/features"
     };
   }
 

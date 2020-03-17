@@ -43,7 +43,7 @@ var (
 )
 
 func request_AtlasFeatureFlag_List_0(ctx context.Context, marshaler runtime.Marshaler, client AtlasFeatureFlagClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq ListFeatureFlagRequest
+	var protoReq ListFeatureFlagsRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -200,7 +200,7 @@ func RegisterAtlasFeatureFlagHandlerClient(ctx context.Context, mux *runtime.Ser
 var (
 	pattern_AtlasFeatureFlag_GetVersion_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"version"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_AtlasFeatureFlag_List_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"feature"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_AtlasFeatureFlag_List_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"features"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_AtlasFeatureFlag_Read_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 1, 0, 4, 1, 5, 1}, []string{"feature", "feature_name"}, "", runtime.AssumeColonVerbOpt(true)))
 )

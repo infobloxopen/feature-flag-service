@@ -17,30 +17,6 @@
   },
   "basePath": "/v1/",
   "paths": {
-    "/feature": {
-      "get": {
-        "tags": [
-          "AtlasFeatureFlag"
-        ],
-        "operationId": "AtlasFeatureFlagList",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "\n\nA collection of response resources can be filtered by a logical expression string that includes JSON tag references to values in each resource, literal values, and logical operators. If a resource does not have the specified tag, its value is assumed to be null.\n\nLiteral values include numbers (integer and floating-point), and quoted (both single- or double-quoted) literal strings, and 'null'. The following operators are commonly used in filter expressions:\n\n|  Op   |  Description               | \n|  --   |  -----------               | \n|  ==   |  Equal                     | \n|  !=   |  Not Equal                 | \n|  \u003e    |  Greater Than              | \n|   \u003e=  |  Greater Than or Equal To  | \n|  \u003c    |  Less Than                 | \n|  \u003c=   |  Less Than or Equal To     | \n|  and  |  Logical AND               | \n|  ~    |  Matches Regex             | \n|  !~   |  Does Not Match Regex      | \n|  or   |  Logical OR                | \n|  not  |  Logical NOT               | \n|  ()   |  Groupping Operators       |\n\n\t\t\t\t\t\t",
-            "name": "_filter",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "GET operation response",
-            "schema": {
-              "$ref": "#/definitions/serviceListFeatureFlagResponse"
-            }
-          }
-        }
-      }
-    },
     "/feature/{feature_name}": {
       "get": {
         "tags": [
@@ -66,6 +42,30 @@
             "description": "GET operation response",
             "schema": {
               "$ref": "#/definitions/serviceReadFeatureFlagResponse"
+            }
+          }
+        }
+      }
+    },
+    "/features": {
+      "get": {
+        "tags": [
+          "AtlasFeatureFlag"
+        ],
+        "operationId": "AtlasFeatureFlagList",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "\n\nA collection of response resources can be filtered by a logical expression string that includes JSON tag references to values in each resource, literal values, and logical operators. If a resource does not have the specified tag, its value is assumed to be null.\n\nLiteral values include numbers (integer and floating-point), and quoted (both single- or double-quoted) literal strings, and 'null'. The following operators are commonly used in filter expressions:\n\n|  Op   |  Description               | \n|  --   |  -----------               | \n|  ==   |  Equal                     | \n|  !=   |  Not Equal                 | \n|  \u003e    |  Greater Than              | \n|   \u003e=  |  Greater Than or Equal To  | \n|  \u003c    |  Less Than                 | \n|  \u003c=   |  Less Than or Equal To     | \n|  and  |  Logical AND               | \n|  ~    |  Matches Regex             | \n|  !~   |  Does Not Match Regex      | \n|  or   |  Logical OR                | \n|  not  |  Logical NOT               | \n|  ()   |  Groupping Operators       |\n\n\t\t\t\t\t\t",
+            "name": "_filter",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "GET operation response",
+            "schema": {
+              "$ref": "#/definitions/serviceListFeatureFlagsResponse"
             }
           }
         }
@@ -123,7 +123,7 @@
         }
       }
     },
-    "serviceListFeatureFlagResponse": {
+    "serviceListFeatureFlagsResponse": {
       "type": "object",
       "properties": {
         "page": {

@@ -3,6 +3,7 @@ package svc
 import (
 	"context"
 	"errors"
+
 	"github.com/Infoblox-CTO/atlas.feature.flag/pkg/client"
 	"github.com/Infoblox-CTO/atlas.feature.flag/pkg/pb"
 	"github.com/Infoblox-CTO/atlas.feature.flag/pkg/storage/tree"
@@ -48,13 +49,13 @@ func (s *server) getLabels(ctx context.Context, request labelsProvider) (map[str
 }
 
 // List will return a list of all feature flags
-func (s *server) List(ctx context.Context, request *pb.ListFeatureFlagRequest) (*pb.ListFeatureFlagResponse, error) {
+func (s *server) List(ctx context.Context, request *pb.ListFeatureFlagsRequest) (*pb.ListFeatureFlagsResponse, error) {
 	labels, err := s.getLabels(ctx, request)
 	if err != nil {
 		return nil, err
 	}
 	featureFlags := client.Cache.FindAll(labels)
-	return &pb.ListFeatureFlagResponse{
+	return &pb.ListFeatureFlagsResponse{
 		Results: featureFlags,
 	}, nil
 }
