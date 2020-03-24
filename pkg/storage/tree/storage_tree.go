@@ -107,6 +107,9 @@ func (d *definition) findByDescriptors(descriptors []string) *record {
 
 func (d *definition) insertRecord(value, overrideName string, priority int, descriptors []string) {
 	r := &record{value: value, overrideName: overrideName, priority: priority, records: map[string]*record{}, exists: true}
+	if len(d.records) > 0 {
+		r.records = d.records
+	}
 	insert(d.records, descriptors, r)
 }
 
@@ -136,10 +139,10 @@ func (d *definition) findDuplicate(descriptors []string) *record {
 }
 
 func (d *definition) removeRecord(descriptors []string) {
-	removeRecord(d.records, descriptors)
+	removeRecord(d.defaultValue, d.records, descriptors)
 }
 
-func removeRecord(records map[string]*record, descriptors []string) {
+func removeRecord(defaultValue string, records map[string]*record, descriptors []string) {
 	length := len(descriptors)
 	switch length {
 	case 0:
@@ -151,12 +154,13 @@ func removeRecord(records map[string]*record, descriptors []string) {
 				delete(records, key)
 			} else {
 				record.clearValue()
+				record.value = defaultValue
 			}
 		}
 	default:
 		nestedRecord, ok := records[descriptors[0]]
 		if ok {
-			removeRecord(nestedRecord.records, descriptors[1:])
+			removeRecord(defaultValue, nestedRecord.records, descriptors[1:])
 		}
 	}
 }
