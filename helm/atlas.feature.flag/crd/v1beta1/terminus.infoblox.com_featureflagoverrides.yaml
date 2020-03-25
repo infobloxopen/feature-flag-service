@@ -8,6 +8,19 @@ metadata:
   creationTimestamp: null
   name: featureflagoverrides.terminus.infoblox.com
 spec:
+  additionalPrinterColumns:
+  - JSONPath: .feature_id
+    name: FeatureID
+    type: string
+  - JSONPath: .value
+    name: Value
+    type: string
+  - JSONPath: .override_name
+    name: OverrideName
+    type: string
+  - JSONPath: .priority
+    name: Priority
+    type: integer
   group: terminus.infoblox.com
   names:
     kind: FeatureFlagOverride
@@ -15,6 +28,7 @@ spec:
     plural: featureflagoverrides
     singular: featureflagoverride
   scope: Namespaced
+  subresources: {}
   validation:
     openAPIV3Schema:
       description: FeatureFlagOverride is the Schema for the applications API

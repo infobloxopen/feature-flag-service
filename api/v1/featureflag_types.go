@@ -26,6 +26,8 @@ type FeatureFlagSpec struct {
 // +kubebuilder:object:root=true
 
 // FeatureFlag is the Schema for the applications API
+// +kubebuilder:printcolumn:name="FeatureID",type=string,JSONPath=`.feature_id`
+// +kubebuilder:printcolumn:name="Value",type=string,JSONPath=`.value`
 type FeatureFlag struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

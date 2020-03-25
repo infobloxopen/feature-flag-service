@@ -38,6 +38,10 @@ type FeatureFlagOverrideSpec struct {
 // +kubebuilder:object:root=true
 
 // FeatureFlagOverride is the Schema for the applications API
+// +kubebuilder:printcolumn:name="FeatureID",type=string,JSONPath=`.feature_id`
+// +kubebuilder:printcolumn:name="Value",type=string,JSONPath=`.value`
+// +kubebuilder:printcolumn:name="OverrideName",type=string,JSONPath=`.override_name`
+// +kubebuilder:printcolumn:name="Priority",type=integer,JSONPath=`.priority`
 type FeatureFlagOverride struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

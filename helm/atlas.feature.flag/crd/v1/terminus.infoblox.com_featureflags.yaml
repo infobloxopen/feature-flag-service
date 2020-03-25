@@ -8,6 +8,13 @@ metadata:
   creationTimestamp: null
   name: featureflags.terminus.infoblox.com
 spec:
+  additionalPrinterColumns:
+  - JSONPath: .feature_id
+    name: FeatureID
+    type: string
+  - JSONPath: .value
+    name: Value
+    type: string
   group: terminus.infoblox.com
   names:
     kind: FeatureFlag
@@ -16,6 +23,7 @@ spec:
     singular: featureflag
   preserveUnknownFields: false
   scope: Namespaced
+  subresources: {}
   validation:
     openAPIV3Schema:
       description: FeatureFlag is the Schema for the applications API
