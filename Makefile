@@ -5,6 +5,8 @@ include Makefile.common
 # you can also chain the original atlas target by adding
 # -atlas to the dependency of the redefined target
 
+include Makefile.controller
+
 CHART := feature-flag
 CHART_VERSION := $(IMAGE_VERSION)
 CHART_FILE := $(CHART)-$(CHART_VERSION).tgz

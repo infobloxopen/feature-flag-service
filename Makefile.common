@@ -57,8 +57,13 @@ test-atlas: fmt-atlas
 	@go test $(GO_TEST_FLAGS) $(GO_PACKAGES)
 
 docker-atlas:
-	$(GEN_BUILD_MANIFEST_JSON)
-	@docker build -f $(SERVER_DOCKERFILE) -t $(SERVER_IMAGE):$(IMAGE_VERSION) .
+	@docker build \
+		--build-arg CMD="${CMD}" \
+		--build-arg REPO="${REPO}" \
+		--build-arg GO_BUILD_FLAGS="${GO_BUILD_FLAGS}" \
+		-f $(SERVER_DOCKERFILE) \
+		-t $(SERVER_IMAGE):$(IMAGE_VERSION) \
+		.
 	@docker image prune -f --filter label=stage=server-intermediate
 
 .docker-$(IMAGE_NAME)-$(IMAGE_VERSION):
@@ -90,11 +95,11 @@ protobuf-atlas:
 
 .PHONY vendor: vendor-atlas
 vendor-atlas:
-	@dep ensure -vendor-only
+	go mod vendor
 
 .PHONY vendor-update: vendor-update-atlas
 vendor-update-atlas:
-	@dep ensure
+	go mod vendor
 
 .PHONY clean: clean-atlas
 clean-atlas:

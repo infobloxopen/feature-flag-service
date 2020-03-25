@@ -13,9 +13,30 @@ pipeline {
     DIRECTORY = "src/github.com/Infoblox-CTO/atlas.feature.flag"
   }
   stages {
+    stage("Github Auth") {
+      steps {
+        dir("$DIRECTORY") {
+          sh 'git config --global url."https://\$GitHub_PAT:x-oauth-basic@github.com/".insteadOf "https://github.com/"'
+        }
+      }
+    }
+    stage("Lint") {
+      steps {
+        dir("$DIRECTORY") {
+          sh "make fmt && git diff --exit-code"
+        }
+      }
+    }
+    stage("Vendoring") {
+      steps {
+        dir("$DIRECTORY") {
+          sh "make vendor"
+        }
+      }
+    }
     stage('Test') {
       steps {
-        sh 'cd $DIRECTORY && make test'
+        sh 'cd $DIRECTORY && make docker-test'
         sh 'helm init --client-only'
         sh 'cd $DIRECTORY && make .helm-lint'
       }
@@ -50,6 +71,15 @@ pipeline {
           archiveArtifacts artifacts: 'build.properties'
         }
       }
+    }
+  }
+  post {
+    always {
+      dir("$DIRECTORY") {
+        sh "make clean || true"
+        sh 'git config --global --unset url."https://\$GitHub_PAT:x-oauth-basic@github.com/".insteadOf'
+      }
+      cleanWs()
     }
   }
 }

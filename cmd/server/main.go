@@ -6,9 +6,11 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
+	"github.com/go-logr/zapr"
 	"github.com/golang/protobuf/proto"
 	_ "github.com/grpc-ecosystem/go-grpc-middleware"
 	_ "github.com/grpc-ecosystem/go-grpc-middleware/validator"
@@ -17,6 +19,10 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
+	"go.uber.org/zap"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/infobloxopen/atlas-app-toolkit/gateway"
 	"github.com/infobloxopen/atlas-app-toolkit/gorm/resource"
@@ -26,23 +32,52 @@ import (
 
 	"github.com/Infoblox-CTO/atlas.feature.flag/pkg/pb"
 	"github.com/Infoblox-CTO/atlas.feature.flag/pkg/svc"
+
+	"github.com/Infoblox-CTO/atlas-app-definition-controller/pkg/util/signals"
+	"github.com/Infoblox-CTO/atlas.feature.flag/cmd/server/controllers"
+	ctrl "sigs.k8s.io/controller-runtime"
 )
 
 func main() {
 	svc.DumpBuildManifest("Terminus / Atlas Feature Flag")
 
-	doneC := make(chan error)
 	logger := NewLogger()
 
-	if viper.GetBool("internal.enable") {
-		go func() { doneC <- ServeInternal(logger) }()
+	z, _ := zap.NewProduction()
+	opts := []zap.Option{
+		zap.AddCallerSkip(1),
+		//zap.AddStacktrace(zap.DebugLevel),
+	}
+	z = z.WithOptions(opts...)
+	zlogger := zapr.NewLogger(z)
+
+	exitSignals := signals.SetupExitHandlers(zlogger)
+
+	var kubeConfig *rest.Config
+	var err error
+	incluster, ierr := ctrl.GetConfig()
+	if ierr == nil {
+		kubeConfig = incluster
+	} else {
+		kubeConfig, _ = clientcmd.BuildConfigFromFlags("", viper.GetString("kubeconfig"))
+	}
+	if kubeConfig == nil {
+		logger.Errorf("creating rest.Config failed for: %s", viper.GetString("kubeconfig"))
+		os.Exit(1)
 	}
 
-	go func() { doneC <- ServeExternal(logger) }()
-
-	if err := <-doneC; err != nil {
+	mgr, err := controllers.StartKubeController(exitSignals, kubeConfig, controllers.Scheme, zlogger)
+	if err != nil {
 		logger.Fatal(err)
 	}
+
+	if viper.GetBool("internal.enable") {
+		go func() { exitSignals.DoneCh() <- ServeInternal(logger) }()
+	}
+
+	go func() { exitSignals.DoneCh() <- ServeExternal(mgr.GetClient(), logger) }()
+
+	<-exitSignals.StopCh()
 }
 
 func NewLogger() *logrus.Logger {
@@ -101,8 +136,8 @@ func ServeInternal(logger *logrus.Logger) error {
 }
 
 // ServeExternal builds and runs the server that listens on ServerAddress and GatewayAddress
-func ServeExternal(logger *logrus.Logger) error {
-	grpcServer, err := NewGRPCServer(logger)
+func ServeExternal(client client.Client, logger *logrus.Logger) error {
+	grpcServer, err := NewGRPCServer(client, logger)
 	if err != nil {
 		logger.Fatalln(err)
 	}

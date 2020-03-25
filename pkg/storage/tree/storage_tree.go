@@ -7,7 +7,9 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/Infoblox-CTO/atlas.feature.flag/pkg/crd"
+	// "github.com/Infoblox-CTO/atlas.feature.flag/pkg/crd"
+
+	ffv1 "github.com/Infoblox-CTO/atlas.feature.flag/api/v1"
 	"github.com/Infoblox-CTO/atlas.feature.flag/pkg/pb"
 	"github.com/Infoblox-CTO/atlas.feature.flag/pkg/storage"
 )
@@ -22,6 +24,7 @@ type (
 		value        string
 		priority     int
 		exists       bool
+		depth        int
 		records      map[string]*record // maps next in chain label_expression to inner overrides FeatureOverrideLookup
 	}
 	InMemoryTreeStorage struct {
@@ -36,33 +39,35 @@ func NewInMemoryStorage() storage.Storage {
 }
 
 // Define ...
-func (s *InMemoryTreeStorage) Define(ffd crd.FeatureFlag) {
+func (s *InMemoryTreeStorage) Define(obj *ffv1.FeatureFlag) {
 	s.Lock()
 	defer s.Unlock()
-	if def, ok := s.tree[ffd.FeatureID]; ok {
-		logrus.WithField("FeatureName", ffd.FeatureID).WithField("NewDefaultValue", ffd.Value).Error("Definition already exists, defaultValue will be overridden")
-		def.defaultValue = ffd.Value
+	logrus.WithField("FeatureName", obj.Spec.FeatureID).Trace("Defining Feature")
+	if def, ok := s.tree[obj.Spec.FeatureID]; ok {
+		logrus.WithField("FeatureName", obj.Spec.FeatureID).WithField("NewDefaultValue", obj.Spec.Value).Error("Definition already exists, defaultValue will be overridden")
+		def.defaultValue = obj.Spec.Value
 		return
 	}
-	s.tree[ffd.FeatureID] = &definition{
-		defaultValue: ffd.Value,
+	s.tree[obj.Spec.FeatureID] = &definition{
+		defaultValue: obj.Spec.Value,
 		records:      make(map[string]*record),
 	}
 }
 
 // Override ...
-func (s *InMemoryTreeStorage) Override(ffo crd.FeatureFlagOverride) {
+func (s *InMemoryTreeStorage) Override(obj *ffv1.FeatureFlagOverride) {
 	s.Lock()
 	defer s.Unlock()
-	if d, ok := s.tree[ffo.FeatureID]; ok {
-		descriptors := labelsToDescriptors(ffo.Labels)
+	logrus.WithField("FeatureName", obj.Spec.FeatureID).Trace("Defining FeatureFlagOverride")
+	if d, ok := s.tree[obj.Spec.FeatureID]; ok {
+		descriptors := labelsToDescriptors(obj.Labels())
 		if duplicate := d.findDuplicate(descriptors); duplicate != nil {
-			logrus.WithField("FeatureName", ffo.FeatureID).Errorf("Duplicate found %#v", duplicate)
+			logrus.WithField("FeatureName", obj.Spec.FeatureID).Errorf("Duplicate found %#v", duplicate)
 		}
-		d.insertRecord(ffo.Value, ffo.OverrideName, ffo.Priority, descriptors)
+		d.insertRecord(obj.Spec.Value, obj.Spec.OverrideName, obj.Spec.Priority, descriptors)
 		return
 	}
-	logrus.WithField("FeatureName", ffo.FeatureID).WithField("Action", "Override").Errorf("Definition not found")
+	logrus.WithField("FeatureName", obj.Spec.FeatureID).WithField("Action", "Override").Errorf("Definition not found")
 }
 
 // FindAll ...
@@ -85,6 +90,7 @@ func (s *InMemoryTreeStorage) FindAll(labels map[string]string) []*pb.FeatureFla
 func (s *InMemoryTreeStorage) Find(featureName string, labels map[string]string) *pb.FeatureFlag {
 	s.RLock()
 	defer s.RUnlock()
+	logrus.WithField("FeatureName", featureName).Trace("Finding Feature")
 	if d, ok := s.tree[featureName]; ok {
 		descriptors := labelsToDescriptors(labels)
 		if r := d.findByDescriptors(descriptors); r != nil {
@@ -97,9 +103,25 @@ func (s *InMemoryTreeStorage) Find(featureName string, labels map[string]string)
 
 func (d *definition) findByDescriptors(descriptors []string) *record {
 	if foundRecords, _ := matchLabels(d.records, descriptors); len(foundRecords) > 0 {
+		names := []string{}
+		for _, r := range foundRecords {
+			names = append(names, fmt.Sprintf("%d %d- %s (%s)", r.depth, r.priority, r.overrideName, r.value))
+		}
+		logrus.WithField("Before", names).Trace("findByDescriptors")
 		sort.Slice(foundRecords, func(i, j int) bool {
-			return foundRecords[i].priority > foundRecords[j].priority
+			if foundRecords[i].priority > foundRecords[j].priority {
+				return true
+			}
+			if foundRecords[i].priority < foundRecords[j].priority {
+				return false
+			}
+			return foundRecords[i].depth > foundRecords[j].depth
 		})
+		names = []string{}
+		for _, r := range foundRecords {
+			names = append(names, fmt.Sprintf("%d %d- %s (%s)", r.depth, r.priority, r.overrideName, r.value))
+		}
+		logrus.WithField("After", names).Trace("findByDescriptors")
 		return foundRecords[0]
 	}
 	return nil
@@ -110,23 +132,28 @@ func (d *definition) insertRecord(value, overrideName string, priority int, desc
 	if len(d.records) > 0 {
 		r.records = d.records
 	}
-	insert(d.records, descriptors, r)
+	insert(d.records, descriptors, r, 0)
 }
 
-func insert(records map[string]*record, descriptors []string, r *record) {
+func insert(records map[string]*record, descriptors []string, r *record, depth int) {
 	length := len(descriptors)
 	switch length {
 	case 0:
 		logrus.Error("It's impossible. Something went wrong")
 	case 1:
+		r.depth = depth
 		records[descriptors[0]] = r
+		logrus.WithField("depth", depth).WithField("descriptor", descriptors[0]).WithField("value", r.value).Trace("insert")
 	default:
 		nestedRecord, ok := records[descriptors[0]]
 		if !ok {
-			nestedRecord = &record{records: map[string]*record{}, exists: false}
+			nestedRecord = &record{records: map[string]*record{}, exists: false, depth: depth}
+			logrus.WithField("depth", depth).WithField("descriptor", descriptors[0]).Trace("insert")
 			records[descriptors[0]] = nestedRecord
+		} else {
+			logrus.WithField("depth", depth).WithField("descriptor", descriptors[0]).Trace("existing")
 		}
-		insert(nestedRecord.records, descriptors[1:], r)
+		insert(nestedRecord.records, descriptors[1:], r, depth+1)
 	}
 }
 
@@ -177,9 +204,19 @@ func matchLabels(records map[string]*record, descriptors []string) (foundRecords
 		completed = true
 		return
 	}
-	if foundRecord, ok := records[descriptors[0]]; ok {
+	var i int
+	for _, descriptor := range descriptors {
+		if _, ok := records[descriptor]; ok {
+			break
+		}
+		i++
+	}
+	if i >= len(descriptors) {
+		return
+	}
+	if foundRecord, ok := records[descriptors[i]]; ok {
 		foundRecords = append(foundRecords, foundRecord)
-		nestedFound, nestedCompleted := matchLabels(foundRecord.records, descriptors[1:])
+		nestedFound, nestedCompleted := matchLabels(foundRecord.records, descriptors[i+1:])
 		completed = nestedCompleted
 		foundRecords = append(foundRecords, nestedFound...)
 	}
@@ -196,20 +233,20 @@ func labelsToDescriptors(labels map[string]string) []string {
 }
 
 // RemoveDefinition ...
-func (s *InMemoryTreeStorage) RemoveDefinition(featureName string) {
+func (s *InMemoryTreeStorage) RemoveDefinition(obj *ffv1.FeatureFlag) {
 	s.Lock()
 	defer s.Unlock()
-	delete(s.tree, featureName)
+	delete(s.tree, obj.Spec.FeatureID)
 }
 
 // RemoveOverride ...
-func (s *InMemoryTreeStorage) RemoveOverride(featureName string, labels map[string]string) {
+func (s *InMemoryTreeStorage) RemoveOverride(obj *ffv1.FeatureFlagOverride) {
 	s.Lock()
 	defer s.Unlock()
-	if d, ok := s.tree[featureName]; ok {
-		descriptors := labelsToDescriptors(labels)
+	if d, ok := s.tree[obj.Spec.FeatureID]; ok {
+		descriptors := labelsToDescriptors(obj.Spec.LabelSelector.MatchLabels)
 		d.removeRecord(descriptors)
 		return
 	}
-	logrus.WithField("FeatureName", featureName).WithField("Action", "RemoveOverride").Error("Definition not found")
+	logrus.WithField("FeatureName", obj.Spec.FeatureID).WithField("Action", "RemoveOverride").Error("Definition not found")
 }

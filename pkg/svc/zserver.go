@@ -3,19 +3,27 @@ package svc
 import (
 	"context"
 	"errors"
+	"sort"
 
-	"github.com/Infoblox-CTO/atlas.feature.flag/pkg/client"
+	featureflagv1 "github.com/Infoblox-CTO/atlas.feature.flag/api/v1"
+	ctrls "github.com/Infoblox-CTO/atlas.feature.flag/controllers"
 	"github.com/Infoblox-CTO/atlas.feature.flag/pkg/pb"
-	"github.com/Infoblox-CTO/atlas.feature.flag/pkg/storage/tree"
+	"github.com/go-logr/logr"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/infobloxopen/atlas-app-toolkit/auth"
-	"github.com/sirupsen/logrus"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // Default implementation of the AtlasFeatureFlag server interface
 type (
 	server struct {
+		client    ctrlclient.Client
 		jwtLabels []string
+		logr.Logger
 	}
 	labelsProvider interface {
 		GetLabels() map[string]string
@@ -31,8 +39,8 @@ func (*server) GetVersion(context.Context, *empty.Empty) (*pb.VersionResponse, e
 }
 
 // get map of labels
-func (s *server) getLabels(ctx context.Context, request labelsProvider) (map[string]string, error) {
-	resultLabels := map[string]string{}
+func (s *server) getLabels(ctx context.Context, request labelsProvider) (labels.Labels, error) {
+	resultLabels := labels.Set{}
 	//get labels from labels
 	for labelName, labelValue := range request.GetLabels() {
 		resultLabels[labelName] = labelValue
@@ -48,43 +56,174 @@ func (s *server) getLabels(ctx context.Context, request labelsProvider) (map[str
 	return resultLabels, nil
 }
 
-// List will return a list of all feature flags
-func (s *server) List(ctx context.Context, request *pb.ListFeatureFlagsRequest) (*pb.ListFeatureFlagsResponse, error) {
-	labels, err := s.getLabels(ctx, request)
+func (s *server) getFeatureFlags(ctx context.Context, featureName string) ([]*featureflagv1.FeatureFlag, error) {
+	// List all features with matching FeatureID (indexed query from local cache)
+	// reset the listOptions (won't make memory of slice elements GC eligible until function exits)
+	var listOptions []ctrlclient.ListOption
+	if featureName != "" {
+		listOptions = append(listOptions, ctrlclient.MatchingFields{ctrls.FeatureFlagFeatureIDKey: featureName})
+	}
+	ffList := &featureflagv1.FeatureFlagList{}
+	err := s.client.List(ctx, ffList, listOptions...)
 	if err != nil {
 		return nil, err
 	}
-	featureFlags := client.Cache.FindAll(labels)
+	matchedFlags := make([]*featureflagv1.FeatureFlag, 0, len(ffList.Items))
+	for _, ff := range ffList.Items {
+		matchedFlags = append(matchedFlags, &ff)
+	}
+	return matchedFlags, nil
+}
+
+func (s *server) getFeatureFlagOverrides(ctx context.Context, featureName string, labelSet labels.Labels) ([]*featureflagv1.FeatureFlagOverride, error) {
+	var err error
+	s.V(1).Info("getting FeatureFlagOverrides", "featureID", featureName, "labels", labelSet)
+	// List all overrides with matching FeatureID (indexed query from local cache)
+	var listOptions []ctrlclient.ListOption
+	if featureName != "" {
+		listOptions = append(listOptions, ctrlclient.MatchingFields{ctrls.FeatureFlagOverrideFeatureIDKey: featureName})
+	}
+	ffoList := &featureflagv1.FeatureFlagOverrideList{}
+	err = s.client.List(ctx, ffoList, listOptions...)
+	if err != nil {
+		return nil, err
+	}
+	// Iterate and test each override's labelSelector against the label query
+	var matchedOverrides []featureflagv1.FeatureFlagOverride
+	for _, ffo := range ffoList.Items {
+		selector, err := metav1.LabelSelectorAsSelector(ffo.Spec.LabelSelector)
+		if err != nil {
+			return nil, err
+		}
+		if !selector.Matches(labelSet) {
+			continue
+		}
+		matchedOverrides = append(matchedOverrides, ffo)
+		s.V(1).Info("matched FeatureFlagOverride", "featureID", featureName, "labels", labelSet,
+			"selector", ffo.Spec.LabelSelector.MatchLabels, "name", ffo.Spec.OverrideName, "priority", ffo.Spec.Priority, "value", ffo.Spec.Value)
+
+	}
+	// Sort matching overrides by higher priority
+	sort.Slice(matchedOverrides, func(i, j int) bool {
+		return matchedOverrides[i].Spec.Priority < matchedOverrides[j].Spec.Priority
+	})
+	matchedOverridesP := make([]*featureflagv1.FeatureFlagOverride, 0, len(matchedOverrides))
+	for _, ffo := range matchedOverrides {
+		s.V(1).Info("sorted FeatureFlagOverride", "featureID", featureName, "labels", labelSet,
+			"selector", ffo.Spec.LabelSelector.MatchLabels, "name", ffo.Spec.OverrideName, "priority", ffo.Spec.Priority, "value", ffo.Spec.Value)
+		matchedOverridesP = append(matchedOverridesP, &ffo)
+	}
+	s.V(1).Info("matched FeatureFlagOverrides", "featureID", featureName, "labels", labelSet, "count", len(matchedOverrides))
+	return matchedOverridesP, nil
+}
+
+// List will return a list of all feature flags
+func (s *server) List(ctx context.Context, req *pb.ListFeatureFlagsRequest) (*pb.ListFeatureFlagsResponse, error) {
+	s.V(1).Info("listing FeatureFlags/FeatureFlagOverrides", "labels", req.GetLabels())
+	labels, err := s.getLabels(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	matchedOverrides, err := s.getFeatureFlagOverrides(ctx, "", labels)
+	if err != nil {
+		return nil, err
+	}
+	matchedFlags, err := s.getFeatureFlags(ctx, "")
+	if err != nil {
+		return nil, err
+	}
+	featureFlags := make([]*pb.FeatureFlag, 0, len(matchedOverrides)+len(matchedFlags))
+	for _, ffo := range matchedOverrides {
+		objectKey, err := ctrlclient.ObjectKeyFromObject(ffo)
+		if err != nil {
+			return nil, err
+		}
+		ffPB := &pb.FeatureFlag{
+			FeatureName: ffo.Spec.FeatureID,
+			Value:       ffo.Spec.Value,
+			Origin:      "FeatureFlagOverride:" + objectKey.String(),
+		}
+		featureFlags = append(featureFlags, ffPB)
+	}
+	for _, ff := range matchedFlags {
+		objectKey, err := ctrlclient.ObjectKeyFromObject(ff)
+		if err != nil {
+			return nil, err
+		}
+		ffPB := &pb.FeatureFlag{
+			FeatureName: ff.Spec.FeatureID,
+			Value:       ff.Spec.Value,
+			Origin:      "FeatureFlag:" + objectKey.String(),
+		}
+		featureFlags = append(featureFlags, ffPB)
+	}
+	s.V(1).Info("found FeatureFlags/FeatureFlagOverrides", "labels", req.GetLabels(), "count", len(featureFlags))
 	return &pb.ListFeatureFlagsResponse{
 		Results: featureFlags,
 	}, nil
 }
 
 // Read will return a particular value for the requested feature flag
-func (s *server) Read(ctx context.Context, request *pb.ReadFeatureFlagRequest) (*pb.ReadFeatureFlagResponse, error) {
-	labels, err := s.getLabels(ctx, request)
+func (s *server) Read(ctx context.Context, req *pb.ReadFeatureFlagRequest) (*pb.ReadFeatureFlagResponse, error) {
+	s.V(1).Info("finding value for feature request", "featureID", req.GetFeatureName(), "labels", req.GetLabels())
+	labels, err := s.getLabels(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	featureFlag := client.Cache.Find(request.FeatureName, labels)
-	if featureFlag == nil {
-		return nil, errors.New("feature flag not found")
-	}
-	return &pb.ReadFeatureFlagResponse{
+	resp := &pb.ReadFeatureFlagResponse{
 		Result: &pb.FeatureFlag{
-			FeatureName: featureFlag.FeatureName,
-			Value:       featureFlag.Value,
-			Origin:      featureFlag.Origin,
+			FeatureName: req.GetFeatureName(),
 		},
-	}, nil
+	}
+	matchedOverrides, err := s.getFeatureFlagOverrides(ctx, req.GetFeatureName(), labels)
+	if err != nil {
+		return nil, err
+	}
+	// return highest priority override that matched
+	if len(matchedOverrides) > 0 {
+		ffo := matchedOverrides[len(matchedOverrides)-1]
+		s.V(1).Info("FeatureFlagOverride selected", "featureID", ffo.Spec.FeatureID, "selector", ffo.Spec.LabelSelector.MatchLabels, "name", ffo.Spec.OverrideName, "priority", ffo.Spec.Priority, "value", ffo.Spec.Value)
+		resp.Result.Value = ffo.Spec.Value
+		objectKey, err := ctrlclient.ObjectKeyFromObject(ffo)
+		if err != nil {
+			return nil, err
+		}
+		resp.Result.Origin = "FeatureFlagOverride:" + objectKey.String()
+		return resp, nil
+	}
+	matchedFlags, err := s.getFeatureFlags(ctx, req.GetFeatureName())
+	if err != nil {
+		return nil, err
+	}
+	// Return an error if more than one Feature is found referencing the same FeatureID
+	// this case can be avoided in future with validating webhook
+	if len(matchedFlags) > 1 {
+		names := make([]string, 0, len(matchedFlags))
+		for _, ff := range matchedFlags {
+			objectKey, err := ctrlclient.ObjectKeyFromObject(ff)
+			if err != nil {
+				return nil, err
+			}
+			names = append(names, objectKey.String())
+		}
+		return nil, errors.New("multiple Feature resources exist with the same FeatureID")
+	}
+	// Return an error if no Feature exists with the FeatureID
+	if len(matchedFlags) == 0 {
+		return nil, errors.New("FeatureFlag or FeatureFlagOverride not found for FeatureID")
+	}
+	ff := matchedFlags[0]
+	resp.Result.Value = ff.Spec.Value
+	objectKey, err := ctrlclient.ObjectKeyFromObject(ff)
+	if err != nil {
+		return nil, err
+	}
+	resp.Result.Origin = "FeatureFlag:" + objectKey.String()
+
+	return resp, nil
 }
 
 // NewBasicServer returns an instance of the default server interface
-func NewBasicServer(useKCRDs bool, jwtLabels []string) (pb.AtlasFeatureFlagServer, error) {
-	client.Cache = tree.NewInMemoryStorage()
-	logrus.Debug(client.Cache)
-	if useKCRDs {
-		client.WatchCRs()
-	}
-	return &server{jwtLabels: jwtLabels}, nil
+func NewBasicServer(client client.Client, jwtLabels []string) (pb.AtlasFeatureFlagServer, error) {
+	return &server{client: client, jwtLabels: jwtLabels, Logger: ctrl.Log.WithName("grpc")}, nil
 }

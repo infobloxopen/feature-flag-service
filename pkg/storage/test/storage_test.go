@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/Infoblox-CTO/atlas.feature.flag/pkg/crd"
 	"github.com/Infoblox-CTO/atlas.feature.flag/pkg/pb"
 	"github.com/Infoblox-CTO/atlas.feature.flag/pkg/storage"
 	"github.com/Infoblox-CTO/atlas.feature.flag/pkg/storage/tree"
+
+	ffv1 "github.com/Infoblox-CTO/atlas.feature.flag/api/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type (
@@ -33,25 +35,47 @@ func TestMain(m *testing.M) {
 
 func define(fName, fValue string) action {
 	return func(s storage.Storage, t *testing.T) {
-		s.Define(crd.FeatureFlag{FeatureID: fName, Value: fValue})
+		s.Define(&ffv1.FeatureFlag{
+			Spec: ffv1.FeatureFlagSpec{
+				FeatureID: fName,
+				Value:     fValue,
+			},
+		})
 	}
 }
 
 func rmDef(key string) action {
 	return func(s storage.Storage, t *testing.T) {
-		s.RemoveDefinition(key)
+		s.RemoveDefinition(&ffv1.FeatureFlag{
+			Spec: ffv1.FeatureFlagSpec{
+				FeatureID: key,
+			},
+		})
 	}
 }
 
 func rmOverride(key string, fields map[string]string) action {
 	return func(s storage.Storage, t *testing.T) {
-		s.RemoveOverride(key, fields)
+		s.RemoveOverride(&ffv1.FeatureFlagOverride{
+			Spec: ffv1.FeatureFlagOverrideSpec{
+				FeatureID:     key,
+				LabelSelector: &metav1.LabelSelector{MatchLabels: fields},
+			},
+		})
 	}
 }
 
 func override(fName, fValue, fOrigin string, priority int, labels map[string]string) action {
 	return func(s storage.Storage, t *testing.T) {
-		s.Override(crd.FeatureFlagOverride{FeatureID: fName, Value: fValue, OverrideName: fOrigin, Priority: priority, Labels: labels})
+		s.Override(&ffv1.FeatureFlagOverride{
+			Spec: ffv1.FeatureFlagOverrideSpec{
+				FeatureID:     fName,
+				Value:         fValue,
+				OverrideName:  fOrigin,
+				Priority:      priority,
+				LabelSelector: &metav1.LabelSelector{MatchLabels: labels},
+			},
+		})
 	}
 }
 

@@ -1,0 +1,10 @@
+domain: infoblox.com
+repo: github.com/Infoblox-CTO/atlas.feature.flag
+resources:
+- group: terminus
+  kind: FeatureFlag
+  version: v1
+- group: terminus
+  kind: FeatureFlagOverride
+  version: v1
+version: "2"

@@ -1,0 +1,173 @@
+
+
+export GOPRIVATE += ,github.com/Infoblox-CTO
+
+CMD := server
+REPO ?= ${PROJECT_ROOT}
+VERSION := $(shell git describe --tags --always --dirty)
+VERSION_LDFLAG := $(REPO)/pkg/version.gitVersion=$(VERSION)
+GOLDFLAGS ?= -mod=vendor -ldflags="$(VERSION_LDFLAG)"
+GO_BUILD_FLAGS := ${GOLDFLAGS} 
+
+# Image URL to use all building/pushing image targets
+IMG ?= $(SERVER_IMAGE):$(IMAGE_VERSION)
+
+# Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
+CRD_OPTIONS ?= "crd:preserveUnknownFields=false,trivialVersions=false"
+CRD_OPTIONS_LEGACY ?= "crd:trivialVersions=true"
+
+KUBE_APPLY ?= kubectl apply -f -
+KUBE_DELETE ?= kubectl delete -f -
+ifeq ($(DRYRUN), true)
+KUBE_APPLY := cat
+KUBE_DELETE := cat
+endif
+
+export KUBECONFIG
+NAMESPACE ?= $(shell kubectl config get-contexts --no-headers | grep '*' | grep -Eo '\S+$$')
+
+# Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
+ifeq (,$(shell go env GOBIN))
+export GOBIN=$(shell go env GOPATH)/bin
+else
+export GOBIN=$(shell go env GOBIN)
+endif
+
+all: docker-build
+
+# Run tests
+test: generate fmt vet manifests kubebuilder-assets
+	go test ./... -test.v -covermode=count -coverprofile=cover.out
+
+test-view:
+	go tool cover -html=cover.out
+
+
+# Build manager binary
+manager: generate fmt vet
+	go build ${GO_BUILD_FLAGS} ${GOLDFLAGS} -o bin/${CMD} ./cmd/${CMD}
+
+# Run against the configured Kubernetes cluster in ~/.kube/config
+run: generate fmt vet manifests
+	go run ./cmd/${CMD}
+
+# Install CRDs into a cluster
+helm-install-crd: manifests
+	helm template ${USER} helm/atlas-app-definition-crds \
+		| ${KUBE_APPLY}
+
+# Uninstall CRDs from a cluster
+helm-uninstall-crd: manifests
+	helm template ${USER} helm/atlas-app-definition-crds \
+		| ${KUBE_APPLY}
+
+# Deploy controller in the configured Kubernetes cluster in ~/.kube/config using Helm chart
+helm-deploy: manifests
+	helm template ${USER} helm/atlas.feature.flag \
+		--set image.imageOverride=${IMG} \
+		--set image.pullPolicy=Always \
+		--set crd.create=false \
+		--set namespace=${NAMESPACE} \
+		--set s3synccontroller.namespace=${NAMESPACE} \
+		| ${KUBE_APPLY}
+
+helm-delete: manifests
+	helm template ${USER} helm/atlas.feature.flag \
+		--set image.imageOverride=${IMG} \
+		--set crd.create=false \
+		--set namespace=${NAMESPACE} \
+		--set s3synccontroller.namespace=${NAMESPACE} \
+		| ${KUBE_DELETE}
+
+
+install-crd: helm-install-crd
+
+uninstall-crd: helm-uninstall-crd
+
+deploy: helm-deploy
+
+
+# Generate manifests e.g. CRD, RBAC etc.
+manifests: controller-gen
+	$(CONTROLLER_GEN) "${CRD_OPTIONS}" rbac:roleName=manager-role webhook paths="./api/v1" output:crd:artifacts:config=helm/atlas.feature.flag/crd/v1
+	$(CONTROLLER_GEN) "${CRD_OPTIONS_LEGACY}" rbac:roleName=manager-role webhook paths="./api/v1" output:crd:artifacts:config=helm/atlas.feature.flag/crd/v1beta1
+
+# Run go fmt against code
+fmt:
+	go fmt ./...
+
+# Run go vet against code
+vet:
+	go vet ./...
+
+# Generate code
+generate: protobuf controller-gen 
+	$(CONTROLLER_GEN) object:headerFile=./hack/boilerplate.go.txt paths="./..."
+
+# Build the docker image
+docker-build: test
+	docker build \
+		--build-arg CMD="${CMD}" \
+		--build-arg REPO="${REPO}" \
+		--build-arg GO_BUILD_FLAGS="${GO_BUILD_FLAGS}" \
+		-f build/Dockerfile \
+		. -t ${IMG}
+
+# test in a the docker image
+docker-test: generate fmt vet manifests
+	docker build \
+		--build-arg CMD="${CMD}" \
+		--build-arg REPO="${REPO}" \
+		--build-arg GO_BUILD_FLAGS="${GO_BUILD_FLAGS}" \
+		-f build/Dockerfile.test \
+		. -t ${IMG}
+
+# Push the docker image
+docker-push:
+	docker push ${IMG}
+
+# find or download controller-gen
+# download controller-gen if necessary
+controller-gen:
+ifeq (, $(shell which controller-gen))
+	@{ \
+	set -e ;\
+	CONTROLLER_GEN_TMP_DIR=$$(mktemp -d) ;\
+	cd $$CONTROLLER_GEN_TMP_DIR ;\
+	go mod init tmp ;\
+	go get sigs.k8s.io/controller-tools/cmd/controller-gen@v0.2.4 ;\
+	rm -rf $$CONTROLLER_GEN_TMP_DIR ;\
+	}
+CONTROLLER_GEN=$(GOBIN)/controller-gen
+else
+CONTROLLER_GEN=$(shell which controller-gen)
+endif
+
+KUBEBUILDER_ASSETS=${GOBIN}/kubebuilder/bin
+export KUBEBUILDER_ASSETS
+
+BUILD_TEMP=${PWD}/.build/
+export BUILD_TEMP
+
+kubebuilder-assets:
+ifeq (, $(wildcard ${GOBIN}/kubebuilder/bin/kubebuilder))
+	@{ \
+	set -e ; \
+	os=$$(go env GOOS); \
+	arch=$$(go env GOARCH); \
+	curl -L https://go.kubebuilder.io/dl/2.3.0/$${os}/$${arch} | tar -xz -C $${GOBIN} ; \
+	mv $${GOBIN}/kubebuilder_2.3.0_$${os}_$${arch} $${GOBIN}/kubebuilder ; \
+	}
+endif
+	mkdir -p .build
+	${KUBEBUILDER_ASSETS}/kube-apiserver --version
+	${KUBEBUILDER_ASSETS}/etcd --version
+	${KUBEBUILDER_ASSETS}/kubectl version || true
+
+
+vendor:
+	# @dep ensure -vendor-only
+	go mod vendor
+
+vendor-update:
+	go mod vendor
