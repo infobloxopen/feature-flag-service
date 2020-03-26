@@ -5,17 +5,19 @@ import (
 	"errors"
 	"sort"
 
-	featureflagv1 "github.com/Infoblox-CTO/atlas.feature.flag/api/v1"
-	ctrls "github.com/Infoblox-CTO/atlas.feature.flag/controllers"
-	"github.com/Infoblox-CTO/atlas.feature.flag/pkg/pb"
 	"github.com/go-logr/logr"
 	"github.com/golang/protobuf/ptypes/empty"
-	"github.com/infobloxopen/atlas-app-toolkit/auth"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/infobloxopen/atlas-app-toolkit/auth"
+
+	featureflagv1 "github.com/Infoblox-CTO/atlas.feature.flag/api/v1"
+	ctrls "github.com/Infoblox-CTO/atlas.feature.flag/controllers"
+	"github.com/Infoblox-CTO/atlas.feature.flag/pkg/pb"
 )
 
 // Default implementation of the AtlasFeatureFlag server interface
@@ -63,15 +65,18 @@ func (s *server) getFeatureFlags(ctx context.Context, featureName string) ([]*fe
 	if featureName != "" {
 		listOptions = append(listOptions, ctrlclient.MatchingFields{ctrls.FeatureFlagFeatureIDKey: featureName})
 	}
+
 	ffList := &featureflagv1.FeatureFlagList{}
 	err := s.client.List(ctx, ffList, listOptions...)
 	if err != nil {
 		return nil, err
 	}
+
 	matchedFlags := make([]*featureflagv1.FeatureFlag, 0, len(ffList.Items))
 	for _, ff := range ffList.Items {
-		matchedFlags = append(matchedFlags, &ff)
+		matchedFlags = append(matchedFlags, ff.DeepCopy())
 	}
+
 	return matchedFlags, nil
 }
 
@@ -124,39 +129,46 @@ func (s *server) List(ctx context.Context, req *pb.ListFeatureFlagsRequest) (*pb
 	if err != nil {
 		return nil, err
 	}
-	matchedOverrides, err := s.getFeatureFlagOverrides(ctx, "", labels)
-	if err != nil {
-		return nil, err
-	}
+
 	matchedFlags, err := s.getFeatureFlags(ctx, "")
 	if err != nil {
 		return nil, err
 	}
-	featureFlags := make([]*pb.FeatureFlag, 0, len(matchedOverrides)+len(matchedFlags))
-	for _, ffo := range matchedOverrides {
-		objectKey, err := ctrlclient.ObjectKeyFromObject(ffo)
+
+	featureFlags := make([]*pb.FeatureFlag, 0, len(matchedFlags))
+	for _, ff := range matchedFlags {
+		matchedOverrides, err := s.getFeatureFlagOverrides(ctx, ff.Spec.FeatureID, labels)
 		if err != nil {
 			return nil, err
 		}
+
 		ffPB := &pb.FeatureFlag{
-			FeatureName: ffo.Spec.FeatureID,
-			Value:       ffo.Spec.Value,
-			Origin:      "FeatureFlagOverride:" + objectKey.String(),
+			FeatureName: ff.Spec.FeatureID,
 		}
-		featureFlags = append(featureFlags, ffPB)
-	}
-	for _, ff := range matchedFlags {
+
+		// return highest priority override that matched
+		if len(matchedOverrides) > 0 {
+			ffo := matchedOverrides[len(matchedOverrides)-1]
+			ffPB.Value = ffo.Spec.Value
+			objectKey, err := ctrlclient.ObjectKeyFromObject(ffo)
+			if err != nil {
+				return nil, err
+			}
+			ffPB.Origin = "FeatureFlagOverride:" + objectKey.String()
+			featureFlags = append(featureFlags, ffPB)
+			continue
+		}
+
+		ffPB.Value = ff.Spec.Value
 		objectKey, err := ctrlclient.ObjectKeyFromObject(ff)
 		if err != nil {
 			return nil, err
 		}
-		ffPB := &pb.FeatureFlag{
-			FeatureName: ff.Spec.FeatureID,
-			Value:       ff.Spec.Value,
-			Origin:      "FeatureFlag:" + objectKey.String(),
-		}
+
+		ffPB.Origin = "FeatureFlag:" + objectKey.String()
 		featureFlags = append(featureFlags, ffPB)
 	}
+
 	s.V(1).Info("found FeatureFlags/FeatureFlagOverrides", "labels", req.GetLabels(), "count", len(featureFlags))
 	return &pb.ListFeatureFlagsResponse{
 		Results: featureFlags,
