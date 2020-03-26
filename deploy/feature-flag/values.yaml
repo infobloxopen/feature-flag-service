@@ -36,7 +36,7 @@ ingress:
 
 host:
   csp:
-    domain: "csp.infoblox.com"
+    domain: "localhost"
 
 prometheus:
   scrape: true
