@@ -15,7 +15,7 @@ var _ = Describe("Testing storage tree", func() {
 	var err error
 	_ = err
 	var (
-		featureID          = "noa"
+		featureName        = "noa"
 		accountOverride    = "acc-40-noa"
 		accountBMOverride  = "acc-40-depl-baremetal-noa"
 		accountK8SOverride = "acc-40-k8s-enabled-noa"
@@ -41,7 +41,7 @@ var _ = Describe("Testing storage tree", func() {
 	)
 
 	BeforeEach(func() {
-		err = CreateOrUpdateFeatureFlag(k8sClient, featureID, namespace, featureID, featureFlagValue)
+		err = CreateOrUpdateFeatureFlag(k8sClient, featureName, namespace, featureName, featureFlagValue)
 		Expect(err).ToNot(HaveOccurred())
 
 		ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
@@ -52,7 +52,7 @@ var _ = Describe("Testing storage tree", func() {
 	})
 
 	AfterEach(func() {
-		err = DeleteFeatureFlag(k8sClient, featureID, namespace)
+		err = DeleteFeatureFlag(k8sClient, featureName, namespace)
 		Expect(err).ToNot(HaveOccurred())
 		cancel()
 	})
@@ -61,21 +61,21 @@ var _ = Describe("Testing storage tree", func() {
 
 		It("should be readable via featureName and no labels", func() {
 			res, err := featureFlagClient.Read(ctx, &featureflagpb.ReadFeatureFlagRequest{
-				FeatureName: featureID,
+				FeatureName: featureName,
 				Labels:      emptyLabelSet,
 			})
 			Expect(err).ToNot(HaveOccurred())
-			Expect(res.Result.FeatureName).Should(Equal(featureID))
+			Expect(res.Result.FeatureName).Should(Equal(featureName))
 			Expect(res.Result.Value).Should(Equal(featureFlagValue))
 		})
 
 		It("should be readable via featureName and labels defined", func() {
 			res, err := featureFlagClient.Read(ctx, &featureflagpb.ReadFeatureFlagRequest{
-				FeatureName: featureID,
+				FeatureName: featureName,
 				Labels:      accountBMLabelSet,
 			})
 			Expect(err).ToNot(HaveOccurred())
-			Expect(res.Result.FeatureName).Should(Equal(featureID))
+			Expect(res.Result.FeatureName).Should(Equal(featureName))
 			Expect(res.Result.Value).Should(Equal(featureFlagValue))
 		})
 	})
@@ -83,7 +83,7 @@ var _ = Describe("Testing storage tree", func() {
 	Context("With FeatureID defined and an override", func() {
 
 		BeforeEach(func() {
-			err = CreateOrUpdateFeatureFlagOverride(k8sClient, accountOverride, namespace, featureID, accountOverrideValue, accountOverridePriority, accountLabelSet)
+			err = CreateOrUpdateFeatureFlagOverride(k8sClient, accountOverride, namespace, featureName, accountOverrideValue, accountOverridePriority, accountLabelSet)
 			Expect(err).ToNot(HaveOccurred())
 		})
 
@@ -94,29 +94,29 @@ var _ = Describe("Testing storage tree", func() {
 
 		It("it should match override with exact label", func() {
 			res, err := featureFlagClient.Read(ctx, &featureflagpb.ReadFeatureFlagRequest{
-				FeatureName: featureID,
+				FeatureName: featureName,
 				Labels:      accountLabelSet,
 			})
 			Expect(err).ToNot(HaveOccurred())
-			Expect(res.Result.FeatureName).Should(Equal(featureID))
+			Expect(res.Result.FeatureName).Should(Equal(featureName))
 			Expect(res.Result.Value).Should(Equal(accountOverrideValue))
 		})
 
 		It("it should match override with extra labels", func() {
 			res, err := featureFlagClient.Read(ctx, &featureflagpb.ReadFeatureFlagRequest{
-				FeatureName: featureID,
+				FeatureName: featureName,
 				Labels:      accountBMLabelSet,
 			})
 			Expect(err).ToNot(HaveOccurred())
-			Expect(res.Result.FeatureName).Should(Equal(featureID))
+			Expect(res.Result.FeatureName).Should(Equal(featureName))
 			Expect(res.Result.Value).Should(Equal(accountOverrideValue))
 
 			res, err = featureFlagClient.Read(ctx, &featureflagpb.ReadFeatureFlagRequest{
-				FeatureName: featureID,
+				FeatureName: featureName,
 				Labels:      accountK8SLabelSet,
 			})
 			Expect(err).ToNot(HaveOccurred())
-			Expect(res.Result.FeatureName).Should(Equal(featureID))
+			Expect(res.Result.FeatureName).Should(Equal(featureName))
 			Expect(res.Result.Value).Should(Equal(accountOverrideValue))
 		})
 	})
@@ -124,9 +124,9 @@ var _ = Describe("Testing storage tree", func() {
 	Context("With FeatureID defined and multiple overrides (account and account+deployment_type)", func() {
 
 		BeforeEach(func() {
-			err = CreateOrUpdateFeatureFlagOverride(k8sClient, accountOverride, namespace, featureID, accountOverrideValue, accountOverridePriority, accountLabelSet)
+			err = CreateOrUpdateFeatureFlagOverride(k8sClient, accountOverride, namespace, featureName, accountOverrideValue, accountOverridePriority, accountLabelSet)
 			Expect(err).ToNot(HaveOccurred())
-			err = CreateOrUpdateFeatureFlagOverride(k8sClient, accountBMOverride, namespace, featureID, accountBMOverrideValue, accountBMOverridePriority, accountBMLabelSet)
+			err = CreateOrUpdateFeatureFlagOverride(k8sClient, accountBMOverride, namespace, featureName, accountBMOverrideValue, accountBMOverridePriority, accountBMLabelSet)
 			Expect(err).ToNot(HaveOccurred())
 		})
 
@@ -139,40 +139,40 @@ var _ = Describe("Testing storage tree", func() {
 
 		It("it should match correct override with multiple labels", func() {
 			res, err := featureFlagClient.Read(ctx, &featureflagpb.ReadFeatureFlagRequest{
-				FeatureName: featureID,
+				FeatureName: featureName,
 				Labels:      accountBMLabelSet,
 			})
 			Expect(err).ToNot(HaveOccurred())
-			Expect(res.Result.FeatureName).Should(Equal(featureID))
+			Expect(res.Result.FeatureName).Should(Equal(featureName))
 			Expect(res.Result.Value).Should(Equal(accountBMOverrideValue))
 
 			res, err = featureFlagClient.Read(ctx, &featureflagpb.ReadFeatureFlagRequest{
-				FeatureName: featureID,
+				FeatureName: featureName,
 				Labels:      accountK8SLabelSet,
 			})
 			Expect(err).ToNot(HaveOccurred())
-			Expect(res.Result.FeatureName).Should(Equal(featureID))
+			Expect(res.Result.FeatureName).Should(Equal(featureName))
 			Expect(res.Result.Value).Should(Equal(accountOverrideValue))
 		})
 
 		It("it should match correct override with multiple labels", func() {
-			err = CreateOrUpdateFeatureFlagOverride(k8sClient, accountK8SOverride, namespace, featureID, accountK8SOverrideValue, accountK8SOverridePriority, accountK8SLabelSet)
+			err = CreateOrUpdateFeatureFlagOverride(k8sClient, accountK8SOverride, namespace, featureName, accountK8SOverrideValue, accountK8SOverridePriority, accountK8SLabelSet)
 			Expect(err).ToNot(HaveOccurred())
 
 			res, err := featureFlagClient.Read(ctx, &featureflagpb.ReadFeatureFlagRequest{
-				FeatureName: featureID,
+				FeatureName: featureName,
 				Labels:      accountBMLabelSet,
 			})
 			Expect(err).ToNot(HaveOccurred())
-			Expect(res.Result.FeatureName).Should(Equal(featureID))
+			Expect(res.Result.FeatureName).Should(Equal(featureName))
 			Expect(res.Result.Value).Should(Equal(accountBMOverrideValue))
 
 			res, err = featureFlagClient.Read(ctx, &featureflagpb.ReadFeatureFlagRequest{
-				FeatureName: featureID,
+				FeatureName: featureName,
 				Labels:      accountK8SLabelSet,
 			})
 			Expect(err).ToNot(HaveOccurred())
-			Expect(res.Result.FeatureName).Should(Equal(featureID))
+			Expect(res.Result.FeatureName).Should(Equal(featureName))
 			Expect(res.Result.Value).Should(Equal(accountK8SOverrideValue))
 		})
 

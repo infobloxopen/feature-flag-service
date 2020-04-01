@@ -57,8 +57,7 @@ var _ = Describe("Testing feature-flag service", func() {
 					Namespace: namespace,
 				},
 				Spec: featureflagv1.FeatureFlagSpec{
-					FeatureID: featureFlagName,
-					Value:     featureFlagValue,
+					Value: featureFlagValue,
 				},
 			}
 			key, _ := ctrlclient.ObjectKeyFromObject(ff)
@@ -82,8 +81,8 @@ var _ = Describe("Testing feature-flag service", func() {
 					Namespace: namespace,
 				},
 				Spec: featureflagv1.FeatureFlagOverrideSpec{
-					FeatureID: featureFlagName,
-					Value:     featureFlagOverrideValue,
+					FeatureName: featureFlagName,
+					Value:       featureFlagOverrideValue,
 					LabelSelector: &metav1.LabelSelector{
 						MatchLabels: map[string]string{"test": "test"},
 					},
@@ -157,7 +156,7 @@ var _ = Describe("Testing feature-flag service", func() {
 				Labels:      map[string]string{},
 			})
 			Expect(err).To(HaveOccurred())
-			Expect(err).To(MatchError("rpc error: code = Unknown desc = FeatureFlag or FeatureFlagOverride not found for FeatureID"))
+			Expect(err).To(MatchError("rpc error: code = Unknown desc = FeatureFlag or FeatureFlagOverride not found for FeatureName"))
 		})
 
 		It("a FeatureFlag should be overridden by FeatureFlagOverride", func() {

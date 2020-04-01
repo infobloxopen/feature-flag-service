@@ -14,10 +14,6 @@ import (
 
 // FeatureFlagSpec defines the desired state of FeatureFlag
 type FeatureFlagSpec struct {
-	// FeatureID is the unique identifier of the feature
-	// +kubebuilder:validation:Required
-	FeatureID string `json:"featureID"`
-
 	// Value is the opaque data for the feature
 	// +kubebuilder:validation:Required
 	Value string `json:"value"`
@@ -26,8 +22,8 @@ type FeatureFlagSpec struct {
 // +kubebuilder:object:root=true
 
 // FeatureFlag is the Schema for the applications API
-// +kubebuilder:printcolumn:name="FeatureID",type=string,JSONPath=`.feature_id`
-// +kubebuilder:printcolumn:name="Value",type=string,JSONPath=`.value`
+// +kubebuilder:printcolumn:name="FeatureName",type=string,JSONPath=`.spec.featureName`
+// +kubebuilder:printcolumn:name="Value",type=string,JSONPath=`.spec.value`
 type FeatureFlag struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

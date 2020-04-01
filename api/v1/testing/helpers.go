@@ -16,7 +16,7 @@ func init() {
 	featureflagv1.AddToScheme(Scheme)
 }
 
-func CreateOrUpdateFeatureFlag(k8sClient client.Client, name string, namespace string, featureID string, value string) error {
+func CreateOrUpdateFeatureFlag(k8sClient client.Client, name string, namespace string, featureName string, value string) error {
 	obj := &featureflagv1.FeatureFlag{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -25,7 +25,6 @@ func CreateOrUpdateFeatureFlag(k8sClient client.Client, name string, namespace s
 	}
 	_, err := controllerutil.CreateOrUpdate(context.TODO(), k8sClient, obj, func() error {
 		obj.Spec.Value = value
-		obj.Spec.FeatureID = featureID
 
 		return nil
 	})
@@ -42,7 +41,7 @@ func DeleteFeatureFlag(k8sClient client.Client, name string, namespace string) e
 	return k8sClient.Delete(context.TODO(), obj)
 }
 
-func CreateOrUpdateFeatureFlagOverride(k8sClient client.Client, name string, namespace string, featureID string, value string, priority int, labels map[string]string) error {
+func CreateOrUpdateFeatureFlagOverride(k8sClient client.Client, name string, namespace string, featureName string, value string, priority int, labels map[string]string) error {
 	obj := &featureflagv1.FeatureFlagOverride{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -57,9 +56,8 @@ func CreateOrUpdateFeatureFlagOverride(k8sClient client.Client, name string, nam
 		}
 		obj.Spec.LabelSelector.MatchLabels = labels
 		obj.Spec.Value = value
-		obj.Spec.FeatureID = featureID
+		obj.Spec.FeatureName = featureName
 		obj.Spec.Priority = priority
-		obj.Spec.OverrideName = name
 
 		return nil
 	})

@@ -26,18 +26,15 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	ffv1 "github.com/Infoblox-CTO/atlas.feature.flag/api/v1"
-	"github.com/Infoblox-CTO/atlas.feature.flag/pkg/storage"
 )
 
 const (
-	FeatureFlagNameKey      = ".metadata.name"
-	FeatureFlagFeatureIDKey = ".spec.featureID"
+	FeatureFlagNameKey = ".metadata.name"
 )
 
 // FeatureFlagReconciler reconciles a FeatureFlag object
 type FeatureFlagReconciler struct {
 	client.Client
-	storage.Storage
 	Log      logr.Logger
 	Scheme   *runtime.Scheme
 	Recorder record.EventRecorder
@@ -61,16 +58,6 @@ func (r *FeatureFlagReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			return nil
 		}
 		return []string{obj.ObjectMeta.Name}
-	}); err != nil {
-		return err
-	}
-
-	if err := mgr.GetFieldIndexer().IndexField(&ffv1.FeatureFlag{}, FeatureFlagFeatureIDKey, func(rawObj runtime.Object) []string {
-		obj := rawObj.(*ffv1.FeatureFlag)
-		if obj.Spec.FeatureID == "" {
-			return nil
-		}
-		return []string{obj.Spec.FeatureID}
 	}); err != nil {
 		return err
 	}

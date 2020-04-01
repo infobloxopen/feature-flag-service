@@ -9,10 +9,10 @@ metadata:
   name: featureflags.terminus.infoblox.com
 spec:
   additionalPrinterColumns:
-  - JSONPath: .feature_id
-    name: FeatureID
+  - JSONPath: .spec.featureName
+    name: FeatureName
     type: string
-  - JSONPath: .value
+  - JSONPath: .spec.value
     name: Value
     type: string
   group: terminus.infoblox.com
@@ -42,14 +42,10 @@ spec:
         spec:
           description: FeatureFlagSpec defines the desired state of FeatureFlag
           properties:
-            featureID:
-              description: FeatureID is the unique identifier of the feature
-              type: string
             value:
               description: Value is the opaque data for the feature
               type: string
           required:
-          - featureID
           - value
           type: object
         status:

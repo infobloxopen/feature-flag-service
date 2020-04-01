@@ -14,17 +14,13 @@ import (
 
 // FeatureFlagOverrideSpec defines the desired state of FeatureFlagOverride
 type FeatureFlagOverrideSpec struct {
-	// FeatureID is the unique identifier of the feature
+	// FeatureName is the unique identifier of the feature
 	// +kubebuilder:validation:Required
-	FeatureID string `json:"featureID"`
+	FeatureName string `json:"featureName"`
 
 	// Value is the opaque data for the feature
 	// +kubebuilder:validation:Required
 	Value string `json:"value"`
-
-	// OverrideName is the opaque data for the feature
-	// +kubebuilder:validation:Required
-	OverrideName string `json:"overrideName"`
 
 	// Priority is the ordering of
 	// +kubebuilder:validation:Required
@@ -38,10 +34,9 @@ type FeatureFlagOverrideSpec struct {
 // +kubebuilder:object:root=true
 
 // FeatureFlagOverride is the Schema for the applications API
-// +kubebuilder:printcolumn:name="FeatureID",type=string,JSONPath=`.feature_id`
-// +kubebuilder:printcolumn:name="Value",type=string,JSONPath=`.value`
-// +kubebuilder:printcolumn:name="OverrideName",type=string,JSONPath=`.override_name`
-// +kubebuilder:printcolumn:name="Priority",type=integer,JSONPath=`.priority`
+// +kubebuilder:printcolumn:name="FeatureName",type=string,JSONPath=`.spec.featureName`
+// +kubebuilder:printcolumn:name="Value",type=string,JSONPath=`.spec.value`
+// +kubebuilder:printcolumn:name="Priority",type=integer,JSONPath=`.spec.priority`
 type FeatureFlagOverride struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

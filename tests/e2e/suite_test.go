@@ -16,6 +16,7 @@ import (
 
 	. "github.com/Infoblox-CTO/atlas-app-definition-controller/tests/helpers"
 	"github.com/Infoblox-CTO/atlas.feature.flag/pkg/pb"
+	. "github.com/Infoblox-CTO/atlas.feature.flag/tests/helpers"
 	"github.com/sirupsen/logrus"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"

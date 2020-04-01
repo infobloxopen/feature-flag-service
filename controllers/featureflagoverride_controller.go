@@ -26,18 +26,15 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	ffv1 "github.com/Infoblox-CTO/atlas.feature.flag/api/v1"
-	"github.com/Infoblox-CTO/atlas.feature.flag/pkg/storage"
 )
 
 const (
-	FeatureFlagOverrideNameKey      = ".spec.overrideName"
-	FeatureFlagOverrideFeatureIDKey = ".spec.featureID"
+	FeatureFlagOverrideFeatureNameKey = ".spec.featureName"
 )
 
 // FeatureFlagOverrideReconciler reconciles a FeatureFlagOverride object
 type FeatureFlagOverrideReconciler struct {
 	client.Client
-	storage.Storage
 	Log      logr.Logger
 	Scheme   *runtime.Scheme
 	Recorder record.EventRecorder
@@ -55,22 +52,12 @@ func (r *FeatureFlagOverrideReconciler) Reconcile(req ctrl.Request) (ctrl.Result
 
 func (r *FeatureFlagOverrideReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
-	if err := mgr.GetFieldIndexer().IndexField(&ffv1.FeatureFlagOverride{}, FeatureFlagOverrideNameKey, func(rawObj runtime.Object) []string {
+	if err := mgr.GetFieldIndexer().IndexField(&ffv1.FeatureFlagOverride{}, FeatureFlagOverrideFeatureNameKey, func(rawObj runtime.Object) []string {
 		obj := rawObj.(*ffv1.FeatureFlagOverride)
-		if obj.Spec.OverrideName == "" {
+		if obj.Spec.FeatureName == "" {
 			return nil
 		}
-		return []string{obj.Spec.OverrideName}
-	}); err != nil {
-		return err
-	}
-
-	if err := mgr.GetFieldIndexer().IndexField(&ffv1.FeatureFlagOverride{}, FeatureFlagOverrideFeatureIDKey, func(rawObj runtime.Object) []string {
-		obj := rawObj.(*ffv1.FeatureFlagOverride)
-		if obj.Spec.FeatureID == "" {
-			return nil
-		}
-		return []string{obj.Spec.FeatureID}
+		return []string{obj.Spec.FeatureName}
 	}); err != nil {
 		return err
 	}

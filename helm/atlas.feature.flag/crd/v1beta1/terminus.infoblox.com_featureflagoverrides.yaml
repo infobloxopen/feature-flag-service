@@ -9,16 +9,13 @@ metadata:
   name: featureflagoverrides.terminus.infoblox.com
 spec:
   additionalPrinterColumns:
-  - JSONPath: .feature_id
-    name: FeatureID
+  - JSONPath: .spec.featureName
+    name: FeatureName
     type: string
-  - JSONPath: .value
+  - JSONPath: .spec.value
     name: Value
     type: string
-  - JSONPath: .override_name
-    name: OverrideName
-    type: string
-  - JSONPath: .priority
+  - JSONPath: .spec.priority
     name: Priority
     type: integer
   group: terminus.infoblox.com
@@ -48,8 +45,8 @@ spec:
         spec:
           description: FeatureFlagOverrideSpec defines the desired state of FeatureFlagOverride
           properties:
-            featureID:
-              description: FeatureID is the unique identifier of the feature
+            featureName:
+              description: FeatureName is the unique identifier of the feature
               type: string
             labelSelector:
               description: LabelSelector is a metav1.LabelSelector which matches against
@@ -95,9 +92,6 @@ spec:
                     are ANDed.
                   type: object
               type: object
-            overrideName:
-              description: OverrideName is the opaque data for the feature
-              type: string
             priority:
               description: Priority is the ordering of
               type: integer
@@ -105,8 +99,7 @@ spec:
               description: Value is the opaque data for the feature
               type: string
           required:
-          - featureID
-          - overrideName
+          - featureName
           - priority
           - value
           type: object

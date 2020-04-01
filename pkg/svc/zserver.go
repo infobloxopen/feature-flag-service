@@ -59,11 +59,11 @@ func (s *server) getLabels(ctx context.Context, request labelsProvider) (labels.
 }
 
 func (s *server) getFeatureFlags(ctx context.Context, featureName string) ([]*featureflagv1.FeatureFlag, error) {
-	// List all features with matching FeatureID (indexed query from local cache)
+	// List all features with matching FeatureName (indexed query from local cache)
 	// reset the listOptions (won't make memory of slice elements GC eligible until function exits)
 	var listOptions []ctrlclient.ListOption
 	if featureName != "" {
-		listOptions = append(listOptions, ctrlclient.MatchingFields{ctrls.FeatureFlagFeatureIDKey: featureName})
+		listOptions = append(listOptions, ctrlclient.MatchingFields{ctrls.FeatureFlagNameKey: featureName})
 	}
 
 	ffList := &featureflagv1.FeatureFlagList{}
@@ -82,11 +82,11 @@ func (s *server) getFeatureFlags(ctx context.Context, featureName string) ([]*fe
 
 func (s *server) getFeatureFlagOverrides(ctx context.Context, featureName string, labelSet labels.Labels) ([]*featureflagv1.FeatureFlagOverride, error) {
 	var err error
-	s.V(1).Info("getting FeatureFlagOverrides", "featureID", featureName, "labels", labelSet)
-	// List all overrides with matching FeatureID (indexed query from local cache)
+	s.V(1).Info("getting FeatureFlagOverrides", "featureName", featureName, "labels", labelSet)
+	// List all overrides with matching FeatureName (indexed query from local cache)
 	var listOptions []ctrlclient.ListOption
 	if featureName != "" {
-		listOptions = append(listOptions, ctrlclient.MatchingFields{ctrls.FeatureFlagOverrideFeatureIDKey: featureName})
+		listOptions = append(listOptions, ctrlclient.MatchingFields{ctrls.FeatureFlagOverrideFeatureNameKey: featureName})
 	}
 	ffoList := &featureflagv1.FeatureFlagOverrideList{}
 	err = s.client.List(ctx, ffoList, listOptions...)
@@ -104,8 +104,8 @@ func (s *server) getFeatureFlagOverrides(ctx context.Context, featureName string
 			continue
 		}
 		matchedOverrides = append(matchedOverrides, ffo)
-		s.V(1).Info("matched FeatureFlagOverride", "featureID", featureName, "labels", labelSet,
-			"selector", ffo.Spec.LabelSelector.MatchLabels, "name", ffo.Spec.OverrideName, "priority", ffo.Spec.Priority, "value", ffo.Spec.Value)
+		s.V(1).Info("matched FeatureFlagOverride", "featureName", featureName, "labels", labelSet,
+			"selector", ffo.Spec.LabelSelector.MatchLabels, "name", ffo.Name, "priority", ffo.Spec.Priority, "value", ffo.Spec.Value)
 
 	}
 	// Sort matching overrides by higher priority
@@ -114,11 +114,11 @@ func (s *server) getFeatureFlagOverrides(ctx context.Context, featureName string
 	})
 	matchedOverridesP := make([]*featureflagv1.FeatureFlagOverride, 0, len(matchedOverrides))
 	for _, ffo := range matchedOverrides {
-		s.V(1).Info("sorted FeatureFlagOverride", "featureID", featureName, "labels", labelSet,
-			"selector", ffo.Spec.LabelSelector.MatchLabels, "name", ffo.Spec.OverrideName, "priority", ffo.Spec.Priority, "value", ffo.Spec.Value)
+		s.V(1).Info("sorted FeatureFlagOverride", "featureName", featureName, "labels", labelSet,
+			"selector", ffo.Spec.LabelSelector.MatchLabels, "name", ffo.Name, "priority", ffo.Spec.Priority, "value", ffo.Spec.Value)
 		matchedOverridesP = append(matchedOverridesP, &ffo)
 	}
-	s.V(1).Info("matched FeatureFlagOverrides", "featureID", featureName, "labels", labelSet, "count", len(matchedOverrides))
+	s.V(1).Info("matched FeatureFlagOverrides", "featureName", featureName, "labels", labelSet, "count", len(matchedOverrides))
 	return matchedOverridesP, nil
 }
 
@@ -137,13 +137,13 @@ func (s *server) List(ctx context.Context, req *pb.ListFeatureFlagsRequest) (*pb
 
 	featureFlags := make([]*pb.FeatureFlag, 0, len(matchedFlags))
 	for _, ff := range matchedFlags {
-		matchedOverrides, err := s.getFeatureFlagOverrides(ctx, ff.Spec.FeatureID, labels)
+		matchedOverrides, err := s.getFeatureFlagOverrides(ctx, ff.Name, labels)
 		if err != nil {
 			return nil, err
 		}
 
 		ffPB := &pb.FeatureFlag{
-			FeatureName: ff.Spec.FeatureID,
+			FeatureName: ff.Name,
 		}
 
 		// return highest priority override that matched
@@ -177,7 +177,7 @@ func (s *server) List(ctx context.Context, req *pb.ListFeatureFlagsRequest) (*pb
 
 // Read will return a particular value for the requested feature flag
 func (s *server) Read(ctx context.Context, req *pb.ReadFeatureFlagRequest) (*pb.ReadFeatureFlagResponse, error) {
-	s.V(1).Info("finding value for feature request", "featureID", req.GetFeatureName(), "labels", req.GetLabels())
+	s.V(1).Info("finding value for feature request", "featureName", req.GetFeatureName(), "labels", req.GetLabels())
 	labels, err := s.getLabels(ctx, req)
 	if err != nil {
 		return nil, err
@@ -194,7 +194,7 @@ func (s *server) Read(ctx context.Context, req *pb.ReadFeatureFlagRequest) (*pb.
 	// return highest priority override that matched
 	if len(matchedOverrides) > 0 {
 		ffo := matchedOverrides[len(matchedOverrides)-1]
-		s.V(1).Info("FeatureFlagOverride selected", "featureID", ffo.Spec.FeatureID, "selector", ffo.Spec.LabelSelector.MatchLabels, "name", ffo.Spec.OverrideName, "priority", ffo.Spec.Priority, "value", ffo.Spec.Value)
+		s.V(1).Info("FeatureFlagOverride selected", "featureName", ffo.Spec.FeatureName, "selector", ffo.Spec.LabelSelector.MatchLabels, "name", ffo.Name, "priority", ffo.Spec.Priority, "value", ffo.Spec.Value)
 		resp.Result.Value = ffo.Spec.Value
 		objectKey, err := ctrlclient.ObjectKeyFromObject(ffo)
 		if err != nil {
@@ -207,7 +207,7 @@ func (s *server) Read(ctx context.Context, req *pb.ReadFeatureFlagRequest) (*pb.
 	if err != nil {
 		return nil, err
 	}
-	// Return an error if more than one Feature is found referencing the same FeatureID
+	// Return an error if more than one Feature is found referencing the same FeatureName
 	// this case can be avoided in future with validating webhook
 	if len(matchedFlags) > 1 {
 		names := make([]string, 0, len(matchedFlags))
@@ -218,11 +218,11 @@ func (s *server) Read(ctx context.Context, req *pb.ReadFeatureFlagRequest) (*pb.
 			}
 			names = append(names, objectKey.String())
 		}
-		return nil, errors.New("multiple Feature resources exist with the same FeatureID")
+		return nil, errors.New("multiple Feature resources exist with the same FeatureName")
 	}
-	// Return an error if no Feature exists with the FeatureID
+	// Return an error if no Feature exists with the FeatureName
 	if len(matchedFlags) == 0 {
-		return nil, errors.New("FeatureFlag or FeatureFlagOverride not found for FeatureID")
+		return nil, errors.New("FeatureFlag or FeatureFlagOverride not found for FeatureName")
 	}
 	ff := matchedFlags[0]
 	resp.Result.Value = ff.Spec.Value
