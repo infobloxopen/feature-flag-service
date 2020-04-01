@@ -51,7 +51,7 @@ func (s *server) getLabels(ctx context.Context, request labelsProvider) (labels.
 	for _, labelName := range s.jwtLabels {
 		labelValue, err := auth.GetJWTField(ctx, labelName, nil)
 		if err != nil {
-			return nil, err
+			continue
 		}
 		resultLabels[labelName] = labelValue
 	}
