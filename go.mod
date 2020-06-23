@@ -3,7 +3,6 @@ module github.com/Infoblox-CTO/atlas.feature.flag
 go 1.13
 
 require (
-	github.com/Infoblox-CTO/atlas-app-definition-controller v1.0.1-0.20200322191914-148cf69379f5
 	github.com/dgrijalva/jwt-go v3.2.1-0.20200107013213-dc14462fd587+incompatible // indirect
 	github.com/go-logr/logr v0.1.0
 	github.com/go-logr/zapr v0.1.0
@@ -20,9 +19,9 @@ require (
 	github.com/json-iterator/go v1.1.9 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/lyft/protoc-gen-validate v0.1.0
-	github.com/onsi/ginkgo v1.12.0
-	github.com/onsi/gomega v1.8.1
+	github.com/onsi/ginkgo v1.12.0 // indirect
 	github.com/pelletier/go-toml v1.6.0 // indirect
+	github.com/pkg/errors v0.9.1 // indirect
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/cast v1.3.1 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
@@ -30,6 +29,7 @@ require (
 	github.com/spf13/viper v1.6.2
 	go.uber.org/zap v1.14.0
 	golang.org/x/crypto v0.0.0-20200206161412-a0c6ece9d31a // indirect
+	golang.org/x/net v0.0.0-20200202094626-16171245cfb2 // indirect
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d // indirect
 	golang.org/x/sys v0.0.0-20200202164722-d101bd2416d5 // indirect
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0 // indirect

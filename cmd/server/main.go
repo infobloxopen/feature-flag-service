@@ -20,7 +20,6 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
-	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -33,9 +32,8 @@ import (
 	"github.com/Infoblox-CTO/atlas.feature.flag/pkg/pb"
 	"github.com/Infoblox-CTO/atlas.feature.flag/pkg/svc"
 
-	"github.com/Infoblox-CTO/atlas-app-definition-controller/pkg/util/signals"
+	"github.com/Infoblox-CTO/atlas.feature.flag/signals"
 	"github.com/Infoblox-CTO/atlas.feature.flag/cmd/server/controllers"
-	ctrl "sigs.k8s.io/controller-runtime"
 )
 
 func main() {
@@ -53,15 +51,8 @@ func main() {
 
 	exitSignals := signals.SetupExitHandlers(zlogger)
 
-	var kubeConfig *rest.Config
-	var err error
-	incluster, ierr := ctrl.GetConfig()
-	if ierr == nil {
-		kubeConfig = incluster
-	} else {
-		kubeConfig, _ = clientcmd.BuildConfigFromFlags("", viper.GetString("kubeconfig"))
-	}
-	if kubeConfig == nil {
+	kubeConfig, err := clientcmd.BuildConfigFromFlags("", viper.GetString("kubeconfig"))
+	if err != nil {
 		logger.Errorf("creating rest.Config failed for: %s", viper.GetString("kubeconfig"))
 		os.Exit(1)
 	}
