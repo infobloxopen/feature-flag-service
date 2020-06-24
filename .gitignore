@@ -4,4 +4,3 @@ bin
 .push-*
 *.out
 .build
-vendor
