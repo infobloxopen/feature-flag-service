@@ -1,9 +1,9 @@
 package controllers
 
 import (
-	"github.com/Infoblox-CTO/atlas.feature.flag/signals"
-	featureflagv1 "github.com/Infoblox-CTO/atlas.feature.flag/api/v1"
-	"github.com/Infoblox-CTO/atlas.feature.flag/controllers"
+	"github.com/infobloxopen/feature-flag-service/signals"
+	featureflagv1 "github.com/infobloxopen/feature-flag-service/api/v1"
+	"github.com/infobloxopen/feature-flag-service/controllers"
 
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/runtime"

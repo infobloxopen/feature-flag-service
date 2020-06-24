@@ -8,7 +8,7 @@ import "github.com/lyft/protoc-gen-validate/validate/validate.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 import "github.com/infobloxopen/atlas-app-toolkit/query/collection_operators.proto";
 
-option go_package = "github.com/Infoblox-CTO/atlas.feature.flag/pkg/pb;pb";
+option go_package = "github.com/infobloxopen/feature-flag-service/pkg/pb;pb";
 
 message VersionResponse {
   string version = 1;

@@ -1,4 +1,4 @@
-module github.com/Infoblox-CTO/atlas.feature.flag
+module github.com/infobloxopen/feature-flag-service
 
 go 1.13
 

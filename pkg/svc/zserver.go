@@ -15,9 +15,9 @@ import (
 
 	"github.com/infobloxopen/atlas-app-toolkit/auth"
 
-	featureflagv1 "github.com/Infoblox-CTO/atlas.feature.flag/api/v1"
-	ctrls "github.com/Infoblox-CTO/atlas.feature.flag/controllers"
-	"github.com/Infoblox-CTO/atlas.feature.flag/pkg/pb"
+	featureflagv1 "github.com/infobloxopen/feature-flag-service/api/v1"
+	ctrls "github.com/infobloxopen/feature-flag-service/controllers"
+	"github.com/infobloxopen/feature-flag-service/pkg/pb"
 )
 
 // Default implementation of the AtlasFeatureFlag server interface

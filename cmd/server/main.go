@@ -29,11 +29,11 @@ import (
 	"github.com/infobloxopen/atlas-app-toolkit/requestid"
 	"github.com/infobloxopen/atlas-app-toolkit/server"
 
-	"github.com/Infoblox-CTO/atlas.feature.flag/pkg/pb"
-	"github.com/Infoblox-CTO/atlas.feature.flag/pkg/svc"
+	"github.com/infobloxopen/feature-flag-service/pkg/pb"
+	"github.com/infobloxopen/feature-flag-service/pkg/svc"
 
-	"github.com/Infoblox-CTO/atlas.feature.flag/signals"
-	"github.com/Infoblox-CTO/atlas.feature.flag/cmd/server/controllers"
+	"github.com/infobloxopen/feature-flag-service/signals"
+	"github.com/infobloxopen/feature-flag-service/cmd/server/controllers"
 )
 
 func main() {

@@ -25,7 +25,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	ffv1 "github.com/Infoblox-CTO/atlas.feature.flag/api/v1"
+	ffv1 "github.com/infobloxopen/feature-flag-service/api/v1"
 )
 
 const (

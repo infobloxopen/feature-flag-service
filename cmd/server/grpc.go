@@ -15,8 +15,8 @@ import (
 	"github.com/infobloxopen/atlas-app-toolkit/gateway"
 	"github.com/infobloxopen/atlas-app-toolkit/requestid"
 
-	"github.com/Infoblox-CTO/atlas.feature.flag/pkg/pb"
-	"github.com/Infoblox-CTO/atlas.feature.flag/pkg/svc"
+	"github.com/infobloxopen/feature-flag-service/pkg/pb"
+	"github.com/infobloxopen/feature-flag-service/pkg/svc"
 )
 
 func NewGRPCServer(client client.Client, logger *logrus.Logger) (*grpc.Server, error) {
