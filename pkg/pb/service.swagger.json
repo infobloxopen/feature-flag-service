@@ -1,0 +1,157 @@
+{
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "swagger": "2.0",
+  "info": {
+    "description": "Atlas Feature Flag service (Terminus) provides the capability to introduce services/features into production on a trail or limited basis.",
+    "title": "Atlas Feature Flag Service",
+    "version": "v1.0.0"
+  },
+  "basePath": "/v1/",
+  "paths": {
+    "/feature/{feature_name}": {
+      "get": {
+        "tags": [
+          "AtlasFeatureFlag"
+        ],
+        "operationId": "AtlasFeatureFlagRead",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "feature_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "\n\nA collection of response resources can be transformed by specifying a set of JSON tags to be returned. For a “flat” resource, the tag name is straightforward. If field selection is allowed on non-flat hierarchical resources, the service should implement a qualified naming scheme such as dot-qualification to reference data down the hierarchy. If a resource does not have the specified tag, the tag does not appear in the output resource.\n\nSpecify this parameter as a comma-separated list of JSON tag names.\n\n\t\t\t\t\t\t",
+            "name": "_fields",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "GET operation response",
+            "schema": {
+              "$ref": "#/definitions/serviceReadFeatureFlagResponse"
+            }
+          }
+        }
+      }
+    },
+    "/features": {
+      "get": {
+        "tags": [
+          "AtlasFeatureFlag"
+        ],
+        "operationId": "AtlasFeatureFlagList",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "\n\nA collection of response resources can be filtered by a logical expression string that includes JSON tag references to values in each resource, literal values, and logical operators. If a resource does not have the specified tag, its value is assumed to be null.\n\nLiteral values include numbers (integer and floating-point), and quoted (both single- or double-quoted) literal strings, and 'null'. The following operators are commonly used in filter expressions:\n\n|  Op   |  Description               | \n|  --   |  -----------               | \n|  ==   |  Equal                     | \n|  !=   |  Not Equal                 | \n|  \u003e    |  Greater Than              | \n|   \u003e=  |  Greater Than or Equal To  | \n|  \u003c    |  Less Than                 | \n|  \u003c=   |  Less Than or Equal To     | \n|  and  |  Logical AND               | \n|  ~    |  Matches Regex             | \n|  !~   |  Does Not Match Regex      | \n|  or   |  Logical OR                | \n|  not  |  Logical NOT               | \n|  ()   |  Groupping Operators       |\n\n\t\t\t\t\t\t",
+            "name": "_filter",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "GET operation response",
+            "schema": {
+              "$ref": "#/definitions/serviceListFeatureFlagsResponse"
+            }
+          }
+        }
+      }
+    },
+    "/version": {
+      "get": {
+        "tags": [
+          "AtlasFeatureFlag"
+        ],
+        "operationId": "AtlasFeatureFlagGetVersion",
+        "responses": {
+          "200": {
+            "description": "GET operation response",
+            "schema": {
+              "$ref": "#/definitions/serviceVersionResponse"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "apiPageInfo": {
+      "description": "PageInfo represents both server-driven and client-driven pagination response.\nServer-driven pagination is a model in which the server returns some\namount of data along with an token indicating there is more data\nand where subsequent queries can get the next page of data.\nClient-driven pagination is a model in which rows are addressable by\noffset and page size (limit).",
+      "type": "object",
+      "properties": {
+        "offset": {
+          "description": "The service may optionally include the offset of the next page of resources.\nA null value indicates no more pages.",
+          "type": "integer",
+          "format": "int32"
+        },
+        "page_token": {
+          "description": "The service response should contain a string to indicate\nthe next page of resources.\nA null value indicates no more pages.",
+          "type": "string"
+        },
+        "size": {
+          "description": "The service may optionally include the total number of resources being paged.",
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "serviceFeatureFlag": {
+      "type": "object",
+      "properties": {
+        "feature_name": {
+          "type": "string"
+        },
+        "origin": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      }
+    },
+    "serviceListFeatureFlagsResponse": {
+      "type": "object",
+      "properties": {
+        "page": {
+          "$ref": "#/definitions/apiPageInfo"
+        },
+        "results": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/serviceFeatureFlag"
+          }
+        }
+      }
+    },
+    "serviceReadFeatureFlagResponse": {
+      "type": "object",
+      "properties": {
+        "result": {
+          "$ref": "#/definitions/serviceFeatureFlag"
+        }
+      }
+    },
+    "serviceVersionResponse": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

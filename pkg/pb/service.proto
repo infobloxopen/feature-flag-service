@@ -1,0 +1,72 @@
+syntax = "proto3";
+
+package service;
+
+import "google/protobuf/empty.proto";
+import "google/api/annotations.proto";
+import "github.com/lyft/protoc-gen-validate/validate/validate.proto";
+import "protoc-gen-swagger/options/annotations.proto";
+import "github.com/infobloxopen/atlas-app-toolkit/query/collection_operators.proto";
+
+option go_package = "github.com/infobloxopen/feature-flag-service/pkg/pb;pb";
+
+message VersionResponse {
+  string version = 1;
+}
+
+message FeatureFlag {
+  string feature_name = 1;
+  string value = 2;
+  string origin = 3;
+}
+
+message ListFeatureFlagsRequest {
+  infoblox.api.Filtering filter = 1;
+  map<string,string> labels = 2;
+}
+
+message ListFeatureFlagsResponse {
+  repeated FeatureFlag results = 1;
+  infoblox.api.PageInfo page = 2;
+}
+
+message ReadFeatureFlagRequest {
+  string feature_name = 1;
+  infoblox.api.FieldSelection fields = 2;
+  map<string,string> labels = 3;
+}
+
+message ReadFeatureFlagResponse {
+  FeatureFlag result = 1;
+}
+
+service AtlasFeatureFlag {
+  rpc GetVersion (google.protobuf.Empty) returns (VersionResponse) {
+    option (google.api.http) = {
+      get: "/version"
+    };
+  }
+
+  rpc List (ListFeatureFlagsRequest) returns (ListFeatureFlagsResponse) {
+    option (google.api.http) = {
+      get: "/features"
+    };
+  }
+
+  rpc Read (ReadFeatureFlagRequest) returns (ReadFeatureFlagResponse) {
+    option (google.api.http) = {
+      get: "/feature/{feature_name}"
+    };
+  }
+}
+
+option (grpc.gateway.protoc_gen_swagger.options.openapiv2_swagger) = {
+    info: {
+      title: "Atlas Feature Flag Service"
+      description: "Atlas Feature Flag service (Terminus) provides the capability to introduce services/features into production on a trail or limited basis."
+      version: "v1.0.0"
+    };
+    schemes: HTTP;
+    schemes: HTTPS;
+    base_path: "/v1/";
+};
